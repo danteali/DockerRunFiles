@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Update GitHub with any changes to Docker scripts.
+/home/ryan/scripts/docker/_update_git.sh
+
 # Get user/pass from .conf file
 typeset -A secrets    # Define array to hold variables 
 while read line; do
@@ -7,8 +10,7 @@ while read line; do
     varname=$(echo "$line" | cut -d '=' -f 1); secrets[$varname]=$(echo "$line" | cut -d '=' -f 2-)
   fi
 done < filerun.conf
-echo ${secrets[FQDN]}; echo ${secrets[FR_DB_NAME]}; echo ${secrets[FR_DB_USER]}; echo ${secrets[FR_DB_PASS]}
-exit
+#echo ${secrets[FQDN]}; echo ${secrets[FR_DB_NAME]}; echo ${secrets[FR_DB_USER]}; echo ${secrets[FR_DB_PASS]}
 
 NAME="filerun"
 FQDN="${secrets[FQDN]}"
