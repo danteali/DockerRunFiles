@@ -1,0 +1,48 @@
+#!/bin/bash
+
+# Get user/pass from .conf file
+typeset -A secrets    # Define array to hold variables 
+while read line; do
+  if echo $line | grep -F = &>/dev/null; then
+    varname=$(echo "$line" | cut -d '=' -f 1); secrets[$varname]=$(echo "$line" | cut -d '=' -f 2-)
+  fi
+done < unifi.conf
+#echo ${secrets[FQDN]}
+
+FQDN="${secrets[FQDN]}"
+NAME=unifi
+
+docker rm -f -v $NAME
+
+# Create container, then add to traefik-proxy network, then start it to make sure it has access to it's 'normal' network
+# We use 'docker create' to create the container, then 'docker network connect' to add the container to traefik-proxy,
+# then 'docker start' to startup the container.
+# Also '-d' not needed with 'docker create' since 'docker start' sutomatically starts in detached mode.
+
+#docker run -d \
+docker create \
+  --name $NAME \
+  --restart="unless-stopped" \
+  -p 8080:8080 \
+  -p 8443:8443 \
+  -p 3478:3478/udp \
+  -p 10001:10001/udp \
+  -v /storage/Docker/unifi/data:/unifi/data \
+  -e TZ='Europe/London' \
+  -e RUNAS_UID0='false' \
+  `# ------- Traefik Proxy Section -------` \
+  `#--network traefik-proxy` \
+  -l "traefik.enable=true" \
+  -l "traefik.port=8443" \
+  -l "traefik.frontend.rule=Host:$NAME.$FQDN" \
+  -l traefik.protocol=https \
+  `# -------------------------------------` \
+  jacobalberty/unifi:latest
+#  jacobalberty/unifi:5.6
+
+# Add to bridge & traefik-proxy network so it can reach the other container
+docker network connect bridge $NAME
+docker network connect traefik-proxy $NAME
+
+# Start container
+docker start $NAME

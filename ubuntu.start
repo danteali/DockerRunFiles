@@ -1,0 +1,50 @@
+#!/bin/bash
+
+# Get user/pass from .conf file
+typeset -A secrets    # Define array to hold variables 
+while read line; do
+  if echo $line | grep -F = &>/dev/null; then
+    varname=$(echo "$line" | cut -d '=' -f 1); secrets[$varname]=$(echo "$line" | cut -d '=' -f 2-)
+  fi
+done < ubuntu.conf
+#echo ${secrets[FQDN]}; echo ${secrets[PASSWORD]}
+
+
+FQDN="${secrets[FQDN]}"
+NAME="ubuntu"
+
+docker rm -f -v $NAME
+
+# Create container, then add to traefik-proxy network, then start it to make sure it has access to it's 'normal' network
+# We use 'docker create' to create the container, then 'docker network connect' to add the container to traefik-proxy,
+# then 'docker start' to startup the container.
+# Also '-d' not needed with 'docker create' since 'docker start' sutomatically starts in detached mode.
+
+# Port 6080 is the HTML5 Web VNC Viewer
+# Port 5900 is the VNC remote port
+
+PASSWORD="${secrets[PASSWORD]}"
+
+#docker run -d \
+docker create \
+  --name=$NAME \
+  --restart="unless-stopped" \
+  -p 6080:80 \
+  -e HTTP_PASSWORD=$PASSWORD \
+  -p 5900:5900 \
+  -e VNC_PASSWORD=$PASSWORD \
+  -v /storage/Docker/ubuntu/home/root:/root \
+  `# ------- Traefik Proxy Section -------` \
+  -l "traefik.enable=false" \
+  -l "traefik.port=80" \
+  -l "traefik.frontend.rule=Host:$NAME.$FQDN" \
+  `# -------------------------------------` \
+  dorowu/ubuntu-desktop-lxde-vnc
+
+# Add to traefik-proxy network so it can reach the other container
+docker network connect bridge $NAME
+docker network connect traefik-proxy $NAME
+
+# Start container
+docker start $NAME
+

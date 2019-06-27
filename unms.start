@@ -1,0 +1,33 @@
+#!/bin/bash
+
+# Frontend explicitly defined in the traefik.toml file
+
+# No 'secrets' to pull in from conf file. 
+
+NAME=unms
+
+docker rm -f -v $NAME
+
+# Could not get working properly with Traefik by using docker labels.
+# Using Traefik's [file] config instead - see traefik.toml
+
+docker run -d \
+  --name $NAME \
+  --restart="unless-stopped" \
+  -l com.centurylinklabs.watchtower.enable='false' \
+  -p 8083:80 \
+  -p 8084:443 \
+  `#-p 2055:2055/udp` \
+  -e PUBLIC_HTTPS_PORT=8084 \
+  -e PUBLIC_WS_PORT=8084 \
+  `#-e PUID=1000 -e PGID=1000` \
+  `#-e PUID=0 -e PGID=0` \
+  -e PUID=911 -e PGID=911 \
+  -e TZ='Europe/London' \
+  -v /storage/Docker/UNMS/config:/config \
+  oznu/unms:0.13.1
+  #oznu/unms:latest
+  #oznu/unms:0.13.0r3
+  #oznu/unms:0.12.0-beta.7
+  #oznu/unms:0.11.3
+

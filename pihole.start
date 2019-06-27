@@ -1,0 +1,59 @@
+#!/bin/bash
+
+# Frontend explicitly defined in the traefik.toml file. Note that traefik.enable=false below
+
+# Get user/pass from .conf file
+typeset -A secrets    # Define array to hold variables 
+while read line; do
+  if echo $line | grep -F = &>/dev/null; then
+    varname=$(echo "$line" | cut -d '=' -f 1); secrets[$varname]=$(echo "$line" | cut -d '=' -f 2-)
+  fi
+done < pihole.conf
+#echo ${secrets[FQDN]}; echo ${secrets[USERNAME]}; echo ${secrets[PASSWORD]}; echo ${secrets[SERVERIP]}
+
+FQDN="${secrets[FQDN]}"
+NAME="pihole"
+
+docker rm -f -v pihole
+
+# Could not get working properly with Traefik by using docker labels.
+# Using Traefik's [file] config instead - see traefik.toml
+
+docker run -d \
+  --name="$NAME" \
+  --restart="unless-stopped" \
+  -p 53:53/tcp \
+  -p 53:53/udp \
+  -p 37337:80/tcp \
+  -p 37338:443 \
+  `# port 67 needed if using piholes DHCP service` \
+  `#-p 67:67/udp` \
+  -v /storage/Docker/pihole/config/pihole.log:/var/log/pihole.log \
+  -v /storage/Docker/pihole/config/etc/hosts:/etc/hosts \
+  -v /storage/Docker/pihole/config/etc/dnsmasq.d/:/etc/dnsmasq.d/ \
+  -v /storage/Docker/pihole/config/etc/pihole/:/etc/pihole/ \
+  --cap-add=NET_ADMIN \
+  -e ServerIP=${secrets[SERVERIP]} \
+  -e PROXY_LOCATION=pihole \
+  -e VIRTUAL_HOST=pihole \
+  -e VIRTUAL_PORT=80 \
+  -e WEBPASSWORD="" \
+  -e TZ="Europe/London" \
+    `#-e DNS1=1.1.1.1` \
+    `#-e DNS2=9.9.9.9` \
+  -e DNS1=192.168.0.1 \
+  -e DNS2=192.168.0.1 \
+  --dns 127.0.0.1 \
+  `# ------- Traefik Proxy Section -------` \
+  `#--network traefik-proxy` \
+  -l "traefik.enable=false" \
+  -l "traefik.port=80" \
+  -l 'traefik.frontend.auth.basic.removeHeader=true' \
+  -l "traefik.frontend.auth.basic.users=${secrets[USERNAME]}:${secrets[PASSWORD]}" \
+  -l "traefik.frontend.rule=Host:pihole.$FQDN,{catchall:.*}" \
+  -l "traefik.frontend.priority=1" \
+  `# -------------------------------------` \
+  pihole/pihole:latest
+
+
+

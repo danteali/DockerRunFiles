@@ -1,0 +1,33 @@
+#!/bin/bash
+
+NAME=""
+SUBDOMAIN=$NAME
+FQDN="mc-guinness.co.uk"
+
+docker rm -f -v $NAME
+
+# Create container, then add to traefik-proxy network, then start it to make sure it has access to it's 'normal' network
+# We use 'docker create' to create the container, then 'docker network connect' to add the container to traefik-proxy,
+# then 'docker start' to startup the container.
+# Also '-d' not needed with 'docker create' since 'docker start' sutomatically starts in detached mode.
+
+#docker run -d \
+docker create \
+  --name=$NAME \
+  --restart="unless-stopped" \
+  -p \
+  -v /storage/Docker/$NAME: \
+  `# ------- Traefik Proxy Section -------` \
+  `#--network traefik-proxy` \
+  -l "traefik.enable=true" \
+  -l "traefik.frontend.rule=Host:$SUBDOMAIN.$FQDN" \
+  -l "traefik.port=XXXX" \
+  `# -------------------------------------` \
+  image/image
+
+# Add to bridge & traefik-proxy network so it can reach other containers
+docker network connect bridge $NAME
+docker network connect traefik-proxy $NAME
+
+# Start container
+docker start $NAME

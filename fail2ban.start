@@ -1,0 +1,39 @@
+#!/bin/bash
+
+# Get user/pass from .conf file
+typeset -A secrets    # Define array to hold variables 
+while read line; do
+  if echo $line | grep -F = &>/dev/null; then
+    varname=$(echo "$line" | cut -d '=' -f 1); secrets[$varname]=$(echo "$line" | cut -d '=' -f 2-)
+  fi
+done < fail2ban.conf
+#echo ${secrets[F2B_DEST_EMAIL]}; echo ${secrets[F2B_SENDER]}
+#echo ${secrets[SMPTUSER]}; echo ${secrets[SMTPPASSWORD]}
+
+docker rm -f -v fail2ban
+
+docker run -d --name fail2ban --restart always \
+  --network host \
+  --cap-add NET_ADMIN \
+  --cap-add NET_RAW \
+  -v /storage/Docker/fail2ban/crazymax/data:/data \
+  -v /var/log:/var/log \
+  -v /storage/Backup/Current/Nextcloud/nextcloud.log:/logs/nextcloud.log:ro \
+  -v "/storage/Docker/plex/config/Library/Application Support/Plex Media Server/Logs/Plex Media Server.log:/logs/plex.log:ro" \
+  -v /storage/Docker/organizr2/www/db/organizrLoginLog.json:/logs/organizr2.log:ro \
+  -e F2B_IPTABLES_CHAIN="FORWARD" \
+  -e TZ="Europe/London" \
+  -e F2B_LOG_LEVEL="INFO" \
+  -e F2B_LOG_TARGET="/var/log/fail2ban.log" \
+  -e F2B_DB_PURGE_AGE="1d" \
+  -e F2B_MAX_RETRY="3" \
+  -e F2B_DEST_EMAIL="${secrets[F2B_DEST_EMAIL]}" \
+  -e F2B_SENDER="${secrets[F2B_SENDER]}" \
+  -e F2B_ACTION="%(action_mwl)s" \
+  -e SSMTP_HOST="smtp.gmail.com" \
+  -e SSMTP_PORT="587" \
+  -e SSMTP_HOSTNAME="crush" \
+  -e SSMTP_USER="${secrets[SMPTUSER]}" \
+  -e SSMTP_PASSWORD="${secrets[SMTPPASSWORD]}" \
+  -e SSMTP_TLS="YES" \
+  crazymax/fail2ban:latest
