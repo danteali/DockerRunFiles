@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Update GitHub with any changes to Docker scripts.
+/home/ryan/scripts/docker/_update_git.sh
+
 # Get user/pass from .conf file
 typeset -A secrets    # Define array to hold variables 
 while read line; do

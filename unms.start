@@ -4,6 +4,9 @@
 
 # No 'secrets' to pull in from conf file. 
 
+# Update GitHub with any changes to Docker scripts.
+/home/ryan/scripts/docker/_update_git.sh
+
 NAME=unms
 
 docker rm -f -v $NAME

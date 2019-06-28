@@ -2,6 +2,9 @@
 
 # Frontend explicitly defined in the traefik.toml file. Note that traefik.enable=false below
 
+# Update GitHub with any changes to Docker scripts.
+/home/ryan/scripts/docker/_update_git.sh
+
 # Get user/pass from .conf file
 typeset -A secrets    # Define array to hold variables 
 while read line; do

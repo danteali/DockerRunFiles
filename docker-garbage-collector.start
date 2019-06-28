@@ -1,6 +1,9 @@
 #!/bin/bash
 # See: https://github.com/spotify/docker-gc
 
+# Update GitHub with any changes to Docker scripts.
+/home/ryan/scripts/docker/_update_git.sh
+
 NAME="docker-garbage-collector"
 
 docker rm -f -v $NAME
