@@ -1,0 +1,127 @@
+#!/bin/bash
+
+blue=`tput setaf 4`
+red=`tput setaf 1`
+green=`tput setaf 2`
+yellow=`tput setaf 3`
+txtund=`tput sgr 0 1`          # Underline
+reset=`tput sgr0`
+
+SOURCE="/home/ryan/scripts/docker/torrents"
+IPCHECK="/home/ryan/scripts/docker/torrents/torr_pia.ipcheck"
+ISPIP=`curl -s ipinfo.io | grep -e ip | tr -d '\n\r ,"ip:'`
+VPNCONNECTED=0
+
+echo ${red} && echo "================ ${txtund}Stopping any torrent containers${reset}${red} ==================="
+echo ${reset}
+docker rm -f -v \
+  torrentproxy \
+  torr_desktop \
+  torr_sabnzbd \
+  torr_lazylibrarian \
+  torr_jackett \
+  torr_couchpotato \
+  torr_radarr \
+  torr_sonarr \
+  torr_transmission \
+  torr_pia
+
+echo ${green} && echo "================== ${txtund}Starting torrent containers${reset}${green} ==================="
+
+echo ${blue}
+echo "---------------------------- PIA -------------------------------"
+echo ${yellow}
+
+$SOURCE/torr_pia.start -nochecks
+echo ${reset}
+
+while [[ $VPNCONNECTED == 0 ]]
+do
+  docker run --rm --net=container:torr_pia appropriate/curl curl -s ipinfo.io > $IPCHECK
+  PIAIP=`cat $IPCHECK | grep -e ip | tr -d '\n\r ,"ip:'`
+  PIACO=`cat $IPCHECK | grep -e country | tr -d '", ' | sed 's/country://'`
+
+  if [[ $PIACO == *"RO"* ]] || [[ $PIACO == *"TR"* ]] || [[ $PIACO == *"BR"* ]]; then
+    VPNCONNECTED=1
+    echo ${green}
+    echo "VPN Connected on IP: $PIAIP"
+    echo "VPN Country: $PIACO"
+    echo "Continuing with service startup...${reset}"
+  else
+    VPNCOUNT=$((VPNCOUNT+1))
+    echo "${reset}# of VPN checks: $VPNCOUNT"
+    echo "PIA IP Address: $PIAIP"
+    echo "PIA Country: $PIACO"
+    echo "----------------------------"
+    sleep 5
+  fi
+
+  if [[ $VPNCOUNT == 10 ]]; then
+    echo "${red}VPN not connected, exiting startup script."
+    echo "Killing PIA container...${reset}"
+    docker rm -f -v torr_pia
+    exit 1
+  fi
+done
+
+echo ${blue}
+echo "----------------------- transmission ---------------------------"
+echo ${yellow}
+$SOURCE/torr_transmission.start -nochecks
+echo ${reset}
+
+echo ${blue}
+echo "-------------------------- jackett -----------------------------"
+echo ${yellow}
+$SOURCE/torr_jackett.start -nochecks
+echo ${reset}
+
+echo ${blue}
+echo "--------------------------- sonarr -----------------------------"
+echo ${yellow}
+$SOURCE/torr_sonarr.start -nochecks
+echo ${reset}
+
+echo ${blue}
+echo "-------------------------- radarr ------------------------------"
+echo ${yellow}
+$SOURCE/torr_radarr.start -nochecks
+echo ${reset}
+
+#echo ${blue}
+#echo "---------------------- LazyLibrarian ---------------------------"
+#echo ${yellow}
+#$SOURCE/torr_lazylibrarian.start -nochecks
+#echo ${reset}
+
+#echo ${blue}
+#echo "------------------------ couchpotato ---------------------------"
+#echo ${yellow}
+#$SOURCE/torr_couchpotato.start -nochecks
+#echo ${reset}
+
+#echo ${blue}
+#echo "------------------------- sabnzbd ------------------------------"
+#echo ${yellow}
+#$SOURCE/torr_sabnzbd.start -nochecks
+#echo ${reset}
+
+#echo ${blue}
+#echo "-------------------------- desktop ------------------------------"
+#echo ${yellow}
+#$SOURCE/torr_desktop.start
+#echo ${reset}
+
+#echo ${blue}
+#echo "----------------- torrent services nginx proxy -----------------"
+#echo ${yellow}
+#$SOURCE/torrentproxy.start
+#echo ${reset}
+
+echo ${green}
+echo "===================== sending notifications ===================="
+echo ${yellow}
+#pushbullet "Torrent Services Started" "`date`"
+pushover -c "media_stack" -T "Torrent Services Started" -m "`date`"
+slack -u torrent_stack -c "#media_stack" -t "Torrent Stack (Re)Started" -e :arrow_double_down:
+echo ${reset}

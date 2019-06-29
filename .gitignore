@@ -15,6 +15,12 @@
 !macvlan_docker.cleaned
 #----------
 !plex
+#----------
+!torrents
+!custom_notify_grab.sh.radarr
+!custom_notify_grab.sh.sonarr
+!torr_transmission_monitor
+!transmission_remove_completed.txt
 #-----------------------------
 
 
@@ -22,18 +28,11 @@
 
 # Explicit Ignore - folders
 archive
-
+*.ipcheck
 #----------
 monitoring
 crush-temp-cpu
 crush-temp-unknown-sensor
-#----------
-torrents
-*.ipcheck
-custom_notify_grab.sh.radarr
-custom_notify_grab.sh.sonarr
-torr_transmission_monitor
-transmission_remove_completed.txt
 #-----------------------------
 
 # Explicit Ignore - files

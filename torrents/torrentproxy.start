@@ -1,0 +1,39 @@
+#!/bin/bash
+
+# Have replaced this nginx proxy with Traefik.
+# Note below we're using "--network traefik-proxy" only because we were transitioning to Traefik
+# use and the other containers were already on that network. This should be whatever network the
+# other torrent stack containers are on.
+
+NAME="torrentproxy"
+
+docker rm -f -v $NAME
+
+docker run -d \
+  --name $NAME \
+  --restart="unless-stopped" \
+  --network traefik-proxy \
+  -p 9090:80 \
+  -p 9089:443 \
+  --link torr_pia:torr_transmission \
+  --link torr_pia:torr_sonarr \
+  --link torr_pia:torr_radarr \
+  --link torr_pia:torr_jackett \
+  --link torr_pia:torr_desktop \
+  --link torr_pia:torr_couchpotato \
+  --link torr_pia:torr_sabnzbd \
+  dperson/nginx \
+  -w "http://torr_transmission:9091/transmission;/transmission" \
+  -w "http://torr_sonarr:8989/;/sonarr" \
+  -w "http://torr_radarr:7878/;/radarr" \
+  -w "http://torr_jackett:9117/UI/Dashboard;/jackett" \
+  -w "http://torr_desktop:80;/" \
+  -w "http://torr_couchpotato:5050/couchpotato;/couchpotato" \
+  -w "http://torr_sabnzbd:8080/sabnzbd;/sabnzbd"
+
+# Run 'torr_desktop' to get access to Jackett while running in torr_pia network.
+# Access torr_desktop on <server_IP>:9090/
+# Access Jackett from within torr_desktop on 127.0.0.1:9117
+# Access Sonnar from within torr_desktop on 127.0.0.1:8989
+# Access Radarr from within torr_desktop on 127.0.0.1:7878
+# COnfigure Sonarr and Radarr Jackett setup

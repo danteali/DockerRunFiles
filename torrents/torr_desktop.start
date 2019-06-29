@@ -1,0 +1,21 @@
+#!/bin/bash
+
+# Ubuntu only needed to access Jackett with nginx proxy
+# No longer needed now that we're using Traefik since Jackett now accessible directly through Traefik
+
+docker rm -f -v torr_desktop
+
+## Start container for remote desktop to torr_pia network
+docker run -d \
+  --restart="unless-stopped" \
+  --name torr_desktop \
+  --net=container:torr_pia \
+  dorowu/ubuntu-desktop-lxde-vnc
+
+# If using nginx proxy run 'torr_desktop' to get access to Jackett while running in torr_pia network.
+# Edit torrentproxy.start to enable route to desktop.
+# Access torr_desktop on <server_ip>:9090/
+# Access Jackett from within torr_desktop on 127.0.0.1:9117
+# Access Sonnar from within torr_desktop on 127.0.0.1:8989
+# Access Radarr from within torr_desktop on 127.0.0.1:7878
+# COnfigure Sonarr and Radarr Jackett setup

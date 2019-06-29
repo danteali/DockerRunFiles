@@ -3,13 +3,14 @@
 # Update GitHub with any changes to Docker scripts.
 /home/ryan/scripts/docker/_update_git.sh
 
-# Get user/pass from .conf file
+# Get sensitive info from .conf file
+CONF_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 typeset -A secrets    # Define array to hold variables 
 while read line; do
   if echo $line | grep -F = &>/dev/null; then
     varname=$(echo "$line" | cut -d '=' -f 1); secrets[$varname]=$(echo "$line" | cut -d '=' -f 2-)
   fi
-done < ubooquity.conf
+done < $CONF_DIR/ubooquity.conf
 #echo ${secrets[FQDN]}
 
 FQDN="${secrets[FQDN]}"

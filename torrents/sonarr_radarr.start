@@ -1,0 +1,39 @@
+#!/bin/bash
+
+blue=`tput setaf 4`
+red=`tput setaf 1`
+green=`tput setaf 2`
+yellow=`tput setaf 3`
+txtund=`tput sgr 0 1`          # Underline
+reset=`tput sgr0`
+
+SOURCE="/home/ryan/scripts/docker/torrents"
+ISPIP=`curl -s ipinfo.io | grep -e ip | tr -d '\n\r ,"ip:'` 
+VPNCONNECTED=0
+
+echo ${red} && echo "================ ${txtund}Stopping running Sonarr & Radarr (& Jackett)${reset}${red} ==================="
+echo ${reset}
+docker rm -f -v \
+  torr_radarr \
+  torr_sonarr \
+  torr_jackett
+
+echo ${green} && echo "================== ${txtund}Starting Sonarr & Radarr (& Jackett)${reset}${green} ==================="
+
+echo ${blue}
+echo "--------------------------- sonarr -----------------------------"
+echo ${yellow}
+$SOURCE/torr_sonarr.start -nochecks
+echo ${reset}
+
+echo ${blue}
+echo "-------------------------- radarr ------------------------------"
+echo ${yellow}
+$SOURCE/torr_radarr.start -nochecks
+echo ${reset}
+
+echo ${blue}
+echo "-------------------------- jackett -----------------------------"
+echo ${yellow}
+$SOURCE/torr_jackett.start -nochecks
+echo ${reset}
