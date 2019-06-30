@@ -29,9 +29,9 @@
 !dockprom
 !exporters
 !nodeexporter_collectors
-#!influxdb_stack
-#!crush-temp-cpu
-#!crush-temp-unknown-sensor
+!influxdb_stack
+!crush-temp-cpu
+!crush-temp-unknown-sensor
 #-----------------------------
 
 
