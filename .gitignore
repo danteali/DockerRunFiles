@@ -21,6 +21,17 @@
 !custom_notify_grab.sh.sonarr
 !torr_transmission_monitor
 !transmission_remove_completed.txt
+#----------
+!monitoring
+!crontab_monitor
+!dockprom_export
+!elastiflow
+!dockprom
+!exporters
+!nodeexporter_collectors
+#!influxdb_stack
+#!crush-temp-cpu
+#!crush-temp-unknown-sensor
 #-----------------------------
 
 
@@ -28,16 +39,21 @@
 
 # Explicit Ignore - folders
 archive
-*.ipcheck
-#----------
-monitoring
-crush-temp-cpu
-crush-temp-unknown-sensor
+grafana_exports
 #-----------------------------
 
 # Explicit Ignore - files
-macvlan_docker.sh
 *.conf
 *.zip
+*.ipcheck
+#----------
+macvlan_docker.sh
+#----------
+crontab_monitor.alerts
+crontab_monitor.history
+crontab_monitor.warn
+crontab_monitor.watchlist
+#----------
+tmp_exporter.sh
 #-----------------------------
 

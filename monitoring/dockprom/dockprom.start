@@ -1,0 +1,35 @@
+#!/bin/bash
+
+# Get sensitive info from .conf file
+CONF_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+typeset -A secrets    # Define array to hold variables 
+while read line; do
+  if echo $line | grep -F = &>/dev/null; then
+    varname=$(echo "$line" | cut -d '=' -f 1); secrets[$varname]=$(echo "$line" | cut -d '=' -f 2-)
+  fi
+done < $CONF_DIR/dockprom.conf
+#echo ${secrets[USERNAME]}; echo ${secrets[PASSWORD]}
+
+
+# Revised: Nov 2018
+# Grafana frontend explicitly defined in the traefik.toml file. 
+
+# Check running as root - attempt to restart with sudo if not already running with root
+#if [ $(id -u) -ne 0 ]; then tput setaf 1; echo "Not running as root, attempting to automatically restart script with root access..."; tput sgr0; echo; sudo $0 $*; exit 1; fi
+
+# Stop running dockprom stack
+docker-compose -f /storage/Docker/dockprom/docker-compose.yml down -v
+
+##########################################################################
+# For completely fresh start delete grafana_data persistent storage.
+# Note that grafana_data stores username/password
+#sudo rm -rf /storage/Docker/dockprom/grafana_data
+##########################################################################
+
+# Start dockprom stack
+#docker-compose -f /storage/Docker/dockprom/docker-compose.yml up -d --force-recreate
+
+# Start dockprom stack with specified username/password:
+USERNAME="${secrets[USERNAME]}"
+PASSWORD="${secrets[PASSWORD]}"
+ADMIN_USER=$USERNAME ADMIN_PASSWORD=$PASSWORD docker-compose -f /storage/Docker/dockprom/docker-compose.yml up -d --force-recreate

@@ -1,0 +1,13 @@
+#!/bin/bash
+
+NAME="dockprom-speedtest-exporter"
+
+docker rm -f -v $NAME
+
+docker run -d \
+  --name=$NAME \
+  --restart="unless-stopped" \
+  --network dockprom_monitor-net \
+  -l org.label-schema.group="monitoring" \
+  -v /storage/Docker/dockprom_influxdb/speedtest/config.ini:/src/config.ini \
+  atribe/speedtest-for-influxdb-and-grafana:patch-1

@@ -1,0 +1,19 @@
+#!/bin/bash
+
+NAME="dockprom-plex-exporter"
+
+docker rm -f -v $NAME
+
+#docker run -d \
+docker create \
+  --restart="unless-stopped" \
+  --name="$NAME" \
+  --network dockprom_monitor-net \
+  -l org.label-schema.group="monitoring" \
+  -v /storage/Docker/dockprom_influxdb/plex:/config \
+  -e PGID=1000 -e PUID=1000 \
+  -e TZ="Europe/London" \
+  boerderij/varken
+
+docker network connect traefik-proxy $NAME
+docker start $NAME
