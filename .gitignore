@@ -41,6 +41,7 @@
 # Explicit Ignore - folders
 archive
 grafana_exports
+unused
 #-----------------------------
 
 # Explicit Ignore - files
