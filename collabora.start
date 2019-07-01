@@ -1,0 +1,45 @@
+#!/bin/bash
+
+# Update GitHub with any changes to Docker scripts.
+/home/ryan/scripts/docker/_update_git.sh
+
+# Get sensitive info from .conf file
+CONF_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+typeset -A secrets    # Define array to hold variables 
+while read line; do
+  if echo $line | grep -F = &>/dev/null; then
+    varname=$(echo "$line" | cut -d '=' -f 1); secrets[$varname]=$(echo "$line" | cut -d '=' -f 2-)
+  fi
+done < $CONF_DIR/collabora.conf
+#echo ${secrets[FQDN]}; echo ${secrets[USERNAME]}; echo ${secrets[PASSWORD]}
+#echo ${secrets[DOMAIN1]}; echo ${secrets[DOMAIN2]}; echo ${secrets[DOMAIN3]}
+
+NAME="collabora"
+SUBDOMAIN=$NAME
+FQDN="${secrets[FQDN]}"
+
+docker rm -f -v $NAME
+
+# Using Nextcloud's network stack therefore port 9980 exposed in that start file not here
+
+#docker create \
+docker run -d \
+  --name=$NAME \
+  --restart="unless-stopped" \
+  --net=container:nextcloud \
+  `#-p 9980:9980`                  `# port exposed in nextcloud container as we are using the NC network stack` \
+  -e "domain=nc\\.${secrets[DOMAIN1]}\\.${secrets[DOMAIN2]}\\.${secrets[DOMAIN3]}"    `# escape any . with \\ ` \
+  -e "username=${secrets[USERNAME]}" \
+  -e "password=${secrets[PASSWORD]}" \
+  --cap-add MKNOD \
+  `# ------- Traefik Proxy Section -------` \
+  `#--network traefik-proxy` \
+  -l traefik.protocol=https \
+  -l "traefik.enable=true" \
+  -l "traefik.frontend.rule=Host:$SUBDOMAIN.$FQDN" \
+  -l "traefik.port=9980" \
+  `# -------------------------------------` \
+  collabora/code:latest
+
+
+

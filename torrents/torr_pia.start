@@ -1,0 +1,94 @@
+#!/bin/bash
+
+blue=`tput setaf 4`
+red=`tput setaf 1`
+green=`tput setaf 2`
+yellow=`tput setaf 3`
+txtund=`tput sgr 0 1`          # Underline
+reset=`tput sgr0`
+
+# Get sensitive info from .conf file
+CONF_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+typeset -A secrets    # Define array to hold variables 
+while read line; do
+  if echo $line | grep -F = &>/dev/null; then
+    varname=$(echo "$line" | cut -d '=' -f 1); secrets[$varname]=$(echo "$line" | cut -d '=' -f 2-)
+  fi
+done < $CONF_DIR/torr_pia.conf
+#echo ${secrets[FQDN]}; echo ${secrets[PIA_REGION]}; echo ${secrets[PIA_USERNAME]}; echo ${secrets[PIA_PASSWORD]}
+#echo ${secrets[LL_USERNAME]}; echo ${secrets[LL_PASSWORD]}
+
+FQDN="${secrets[FQDN]}"
+
+docker rm -f -v torr_pia > /dev/null 2>&1
+
+#List of PIA's ovpn files are here: https://github.com/ColinHebert/pia-openvpn/tree/master/pia
+# Use any of these as the REGION below.
+# If REGION changed, remember to change the country code which is checked below (~ line 57)
+# ALSO CHANGE THE COUNTRY CODE IN TORRENT.START SCRIPT!!!
+
+docker run -d \
+  --name=torr_pia \
+  --restart="unless-stopped" \
+  --cap-add=NET_ADMIN \
+  --device=/dev/net/tun \
+  --dns 209.222.18.222 --dns 209.222.18.218 \
+  -e "REGION=${secrets[PIA_REGION]}" \
+  -e "USERNAME=${secrets[PIA_USERNAME]}" \
+  -e "PASSWORD=${secrets[PIA_PASSWORD]}" \
+  `# ------- Traefik Proxy Section -------` \
+  --network traefik-proxy \
+  -l "traefik.enable=true" \
+  -l "traefik.transmission.port=9091" \
+  -l "traefik.transmission.frontend.rule=Host:transmission.$FQDN" \
+  -l "traefik.sonarr.port=8989" \
+  -l "traefik.sonarr.frontend.rule=Host:sonarr.$FQDN" \
+  -l "traefik.radarr.port=7878" \
+  -l "traefik.radarr.frontend.rule=Host:radarr.$FQDN" \
+  -l "traefik.jackett.port=9117" \
+  -l "traefik.jackett.frontend.rule=Host:jackett.$FQDN" \
+  `#-l "traefik.lazylibrarian.port=5299"` \
+  `#-l "traefik.lazylibrarian.frontend.rule=Host:lazylibrarian.$FQDN"` \
+  `#-l "traefik.lazylibrarian.frontend.auth.basic.users=${secrets[LL_USERNAME]}:${secrets[LL_PASSWORD]}"` \
+  `# Ubuntu only needed to access Jackett with nginx proxy, not needed since Jackett accessible directly through traefik` \
+  `#-l "traefik.ubuntu.port=80"` \
+  `#-l "traefik.ubuntu.frontend.rule=Host:ubuntu.$FQDN"` \
+  `# -------------------------------------` \
+  colinhebert/pia-openvpn
+
+echo
+
+if [[ $1 != "-nochecks" ]]; then
+  isp_ip=`curl -s ipinfo.io | grep -e ip | tr -d '\n\r ,"ip:'`
+  IPCHECK="/home/ryan/scripts/docker/torrents/torr_pia.ipcheck"
+  VPNCONNECTED=0
+
+  while [[ $VPNCONNECTED == 0 ]]
+  do
+    docker run --rm --net=container:torr_pia appropriate/curl curl -s ipinfo.io > $IPCHECK
+    PIAIP=`cat $IPCHECK | grep -e ip | tr -d '\n\r ,"ip:'`
+    PIACO=`cat $IPCHECK | grep -e country | tr -d '", ' | sed 's/country://'`
+
+    if [[ $PIACO == *"RO"* ]] || [[ $PIACO == *"TR"* ]] || [[ $PIACO == *"BR"* ]]; then
+      VPNCONNECTED=1
+      echo ${green}
+      echo "VPN Connected on IP: $PIAIP"
+      echo "VPN Country: $PIACO"
+      echo "Continuing with service startup...${reset}" && echo
+    else
+      VPNCOUNT=$((VPNCOUNT+1))
+      echo "${reset}# of VPN checks: $VPNCOUNT"
+      echo "PIA IP Address: $PIAIP"
+      echo "PIA Country: $PIACO"
+      echo "----------------------------"
+      sleep 5
+    fi
+
+    if [[ $VPNCOUNT == 10 ]]; then
+      echo "${red}VPN not connected, exiting startup script."
+      echo "Killing PIA container...${reset}"
+      docker rm -f -v torr_pia
+      exit 1
+    fi
+  done
+fi
