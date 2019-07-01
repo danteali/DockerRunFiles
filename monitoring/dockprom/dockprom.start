@@ -1,5 +1,14 @@
 #!/bin/bash
 
+# This 'start' script just runs the docker-compose command against the dockprom docker-compose.yml.
+# This is largely just a vanilla implementation of the dockprom stack from:
+# https://github.com/stefanprodan/dockprom
+# The only real customisation I've made is to change the ports where the services are exposed since
+# they clashed with already used ports, and set the environment variables for Grafana email alerts.
+
+# But then I also added the InfluxDB stack as seen on other scripts here (can also be displayed in
+# Grafana). And the various exporter scripts to grab info/push info into Prometheus/InfluxDB.
+
 # Get sensitive info from .conf file
 CONF_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 typeset -A secrets    # Define array to hold variables 

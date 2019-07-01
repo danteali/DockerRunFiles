@@ -32,6 +32,7 @@
 !influxdb_stack
 !crush-temp-cpu
 !crush-temp-unknown-sensor
+!homeassistant
 #-----------------------------
 
 

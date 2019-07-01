@@ -1,0 +1,16 @@
+#!/bin/bash
+
+NAME="eclipse-mosquitto"
+
+docker rm -f -v $NAME
+
+docker run -d \
+  --name=$NAME \
+  --restart="unless-stopped" \
+  -p 1883:1883 \
+  -p 9001:9001 \
+  -v /storage/Docker/eclipse-mosquitto/config/mosquitto.conf:/mosquitto/config/mosquitto.conf \
+  -v /storage/Docker/eclipse-mosquitto/log/mosquitto.log:/mosquitto/log/mosquitto.log \
+  -v /storage/Docker/eclipse-mosquitto/data/:/mosquitto/data/ \
+  eclipse-mosquitto
+  

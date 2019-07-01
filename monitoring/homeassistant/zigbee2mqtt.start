@@ -1,0 +1,16 @@
+#!/bin/bash
+
+NAME="zigbee2mqtt"
+
+docker rm -f -v $NAME
+
+docker run -d \
+  --name=$NAME \
+  --restart="unless-stopped" \
+  `#--net=host` \
+  -l org.label-schema.group="monitoring" \
+  -v /storage/Docker/zigbee2mqtt/data:/app/data \
+  -v /storage/Docker/zigbee2mqtt/data/zigbee-shepherd-converters:/app/node_modules/zigbee-shepherd-converters \
+  -v /storage/Docker/zigbee2mqtt/data/lib/extension/homeassistant.js:/app/lib/extension/homeassistant.js \
+  --device=/dev/ttyACM0 \
+  koenkk/zigbee2mqtt
