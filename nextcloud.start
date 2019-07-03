@@ -96,3 +96,12 @@ docker network connect traefik-proxy $NAME
 docker start $NAME
 
 #docker exec -ti nextcloud occ upgrade
+
+# From old nginx proxy command:
+  #`# ------- Nginx Proxy Section -------` \
+  #`#-e "VIRTUAL_HOST=guac.$FQDN"` \
+  #`#-e "VIRTUAL_HOST=guac.$FQDN"` \
+  #`#-e "LETSENCRYPT_HOST=guac.$FQDN"` \
+  #`#-e "LETSENCRYPT_EMAIL=$EMAIL"` \
+  #`#-e "LETSENCRYPT_TEST=true"` \
+#

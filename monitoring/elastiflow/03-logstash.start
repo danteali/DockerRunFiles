@@ -26,8 +26,8 @@ docker run -d \
   -v /storage/Docker/elastiflow/config/logstash/conf.d/:/etc/logstash/elastiflow/conf.d/ \
   `# Default mem allocation - 3GB, recommended for prod - 4GB` \
   `#-e LS_JAVA_OPTS="-Xms3g -Xmx3g"` \
-  -e ES_JAVA_OPTS="-Xms2560m -Xmx2560m" \
-  `#-e ES_JAVA_OPTS="-Xms2g -Xmx2g"` \
+  `#-e ES_JAVA_OPTS="-Xms2560m -Xmx2560m"` \
+  -e ES_JAVA_OPTS="-Xms2g -Xmx2g" \
   `#-e LS_JAVA_OPTS="-Xms1536m -Xmx1536m"` \
   `#-e ES_JAVA_OPTS="-Xms1g -Xmx1g"` \
   `#-e ES_JAVA_OPTS="-Xms512m -Xmx512m"` \

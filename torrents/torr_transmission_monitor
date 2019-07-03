@@ -1,12 +1,8 @@
 #!/bin/bash
 
-# Script to check for completed downloads and remove from transmission 
-# - need to have a copy of transmission_remove_completed.txt mounted in transmission's 
-# container as /config/transmission_remove_completed. 
-# Also copy transmission_remove_completed.conf to the same location.
-
-# Also check for running transmission container with a GB IP address
-# Kill transmission if it's IP is in GB.
+## Script to check for completed downloads and remove from transmission
+## Also check for running transmission container with a GB IP address
+## Kill transmission if it's IP is in GB.
 
 blue=`tput setaf 4`
 red=`tput setaf 1`

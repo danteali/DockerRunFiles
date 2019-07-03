@@ -9,8 +9,11 @@ docker rm -f -v elastiflow-kibana-oss
 docker rm -f -v elastiflow-logstash-oss
 
 
-# For completely fresh start delete data directory.
+# For completely fresh start delete data directory ten re-create with correct permissions
   #sudo rm -rf /storage/Docker/elastiflow/data
+  #sudo mkdir -p /storage/Docker/elastiflow/data
+  #sudo chown -R 1000:1000 /storage/Docker/elastiflow/data
+
 
 cd $WHEREAMI
 ./01-elasticsearch.start

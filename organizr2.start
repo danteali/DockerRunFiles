@@ -54,3 +54,29 @@ docker network connect traefik-proxy $NAME
 
 # Start container
 docker start $NAME
+
+
+## Old nginx proxy config
+#  `# ------- Nginx Proxy Section -------` \
+#  `#-e "VIRTUAL_HOST=$NAME.$FQDN"` \
+#  `#-e "LETSENCRYPT_HOST=$NAME.$FQDN"` \
+#  `#-e "LETSENCRYPT_EMAIL=$EMAIL"` \
+#  `#-e "HSTS=off"` \
+#  `#-e "LETSENCRYPT_TEST=true"` \
+##
+
+# Old organizr config (not v2)
+#docker create \
+#  --name=$NAME \
+#  --restart="unless-stopped" \
+#  -v /storage/Docker/organizr:/config \
+#  -e PGID=1000 -e PUID=1000  \
+#  -p 8076:80 \
+#  `# ------- Traefik Proxy Section -------` \
+#  --network traefik-proxy \
+#  -l "traefik.enable=true" \
+#  -l "traefik.port=80" \
+#  -l "traefik.frontend.rule=Host:$NAME.$FQDN" \
+#  `#-l "traefik.frontend.auth.basic.users=${secrets[USERNAME]}:${secrets[PASSWORD]}"` \
+#  `# -------------------------------------` \
+#  lsiocommunity/organizr

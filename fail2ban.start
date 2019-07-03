@@ -41,3 +41,27 @@ docker run -d --name fail2ban --restart always \
   -e SSMTP_PASSWORD="${secrets[SMTPPASSWORD]}" \
   -e SSMTP_TLS="YES" \
   crazymax/fail2ban:latest
+
+
+# Command to run superitman fail2ban image. Used to use this one but found crazymax to be
+# more regularly updated and better for my needs. Keeping this here for a record in case
+# I need it again. 
+
+#docker run -d -it \
+#  --name fail2ban \
+#  --restart="unless-stopped" \
+#  -v /storage/Docker/fail2ban/superitman/config/jail.local:/etc/fail2ban/jail.local \
+#  -v /var/log:/var/log \
+#  -v /storage/Docker/fail2ban/superitman/filter.d/traefik-auth.conf:/etc/fail2ban/filter.d/traefik-auth.conf \
+#  -v /storage/Docker/fail2ban/superitman/filter.d/traefik-botsearch.conf:/etc/fail2ban/filter.d/traefik-botsearch.conf \
+#  -v /storage/Docker/fail2ban/superitman/jail.d/traefik.conf:/etc/fail2ban/jail.d/traefik.conf \
+#  -v /usr/sbin/sendmail:/usr/sbin/sendmail \
+#  -v /usr/sbin/ssmtp:/usr/sbin/ssmtp \
+#  -v /etc/ssmtp/ssmtp.conf:/etc/ssmtp/ssmtp.conf:ro \
+#  -v /usr/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu:ro \
+#  -v /etc/timezone:/etc/timezone.host:ro \
+#  --net host \
+#  `#--cap-add=NET_ADMIN` \
+#  `#--cap-add=NET_RAW` \
+#  --privileged \
+#  superitman/fail2ban:latest

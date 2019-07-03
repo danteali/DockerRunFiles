@@ -67,3 +67,24 @@ docker network connect traefik-proxy $NAME
 
 # Start container
 docker start $NAME
+
+
+# Old timhaak image config:
+#docker run -d \
+#  --restart="unless-stopped" \
+#  --name $NAME \
+#  -h crush \
+#  -v /storage/Docker/plex:/config \
+#  -v /storage/Media/Video:/data \
+#  -v /storage/Media/Audio:/Music \
+#  -v /storage/Media/Pictures:/Pictures \
+#  -v /storage/scratchpad:/scratchpad \
+#  -e SKIP_CHOWN_CONFIG=true \
+#  --net=host \
+#  -e PLEX_USERNAME="$PLEX_USERNAME" \
+#  -e PLEX_PASSWORD="$PLEX_PASSWORD" \
+#  `#-p 32400:32400` \
+#  `#-e "VIRTUAL_HOST=$SUBDOMAIN.$FQDN"` \
+#  `#-e "VIRTUAL_PORT=32400"` \
+#  `#--expose=32403` \
+#  timhaak/plex

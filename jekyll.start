@@ -1,0 +1,34 @@
+#!/bin/bash
+
+# Simple website which shows the IP of visitor. Very useful for testing Traefik configuration etc
+
+# Update GitHub with any changes to Docker scripts.
+#/home/ryan/scripts/docker/_update_git.sh
+
+NAME="jekyll"
+
+docker rm -f -v $NAME
+
+docker run -d \
+  --restart="unless-stopped" \
+  --name=$NAME \
+  -p "4000:4000"  \
+  -v /storage/Docker/jekyll:/usr/src/app \
+  -e JEKYLL_GITHUB_TOKEN=my-github-token \
+  starefossen/github-pages
+
+
+# In order for the {{ site.github }} metadata variables to be populated you need to set the 
+# JEKYLL_GITHUB_TOKEN environment variable with your GitHub token.
+
+# Remember to add all the gems to your _config.yml file in order to get all the different things to 
+# work correctly:
+#
+#repository: your/repo
+#
+#gems:
+#- jekyll-github-metadata
+#- jekyll-mentions
+#- jekyll-redirect-from
+#- jekyll-sitemap
+#- jemoji
