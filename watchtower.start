@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# Get sensitive info from .conf file
+CONF_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+typeset -A secrets    # Define array to hold variables 
+while read line; do
+  if echo $line | grep -F = &>/dev/null; then
+    varname=$(echo "$line" | cut -d '=' -f 1); secrets[$varname]=$(echo "$line" | cut -d '=' -f 2-)
+  fi
+done < $CONF_DIR/watchtower.conf
+#echo ${secrets[SLACK_WEBHOOK]}
+
+# Update GitHub with any changes to Docker scripts.
+/home/ryan/scripts/docker/_update_git.sh
+
+docker rm -f -v watchtower
+
+docker run -d \
+  --restart="unless-stopped" \
+  --name watchtower \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -e WATCHTOWER_NOTIFICATIONS=slack \
+  -e WATCHTOWER_NOTIFICATION_SLACK_HOOK_URL="${secrets[SLACK_WEBHOOK]}" \
+  containrrr/watchtower --schedule "0 0 4 * * *" --cleanup
+  #containrrr/watchtower --debug
+  #v2tec/watchtower:latest --interval 43200
+
