@@ -63,6 +63,7 @@
     LOG_ALERT_HISTORY="$WHEREAMI/crontab_monitor.history"
     # This file should list allthe containers you wish to monitor
     WATCHLIST_FILE="$WHEREAMI/crontab_monitor.watchlist"
+    
     # Notification Switches - set 0/1 depending on which alerts you want to send.
     # Notify on screen
       SCREEN=1
@@ -83,7 +84,7 @@
       NOTIFY_EVERY_INSTANCE=1
     # Update NodeExporter (used to push data into Prometheus for display in Grafana) - this calls 
     # my NodeExporter script which can be found here:
-    # 
+    # https://github.com/danteali/docker_cron_monitor/blob/master/nodeexporter.sh
       NOTIFY_NODEXPLORER=1
       NODEEXPORTER_PATH="/home/ryan/scripts/docker/monitoring/dockprom/nodeexporter_collectors/logger.sh"
 
@@ -809,7 +810,7 @@ if [[ ! $CLEARED_ALERTS_STRING == "" ]] && [[ $NOTIFY_SUMMARY == 1 ]]; then
         echo "CONTAINERS UP - Sending summary Pushover notification - these containers back up: $CLEARED_ALERTS_STRING"
         PO_TITLE="CONTAINERS UP!!!"
         PO_MSG="$CLEARED_ALERTS_STRING up @ `date`"
-        pushbullet "$PB_SUBJECT" "$PB_MSG"
+        pushover -c "alert" -T "$PO_TITLE" "$PO_MSG"
     fi
     if [[ $NOTIFY_SLACK == 1 ]]; then
         echo "CONTAINERS UP - Sending summary Slack notification for - these containers back up: $CLEARED_ALERTS_STRING"
