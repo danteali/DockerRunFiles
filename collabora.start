@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Collabora integrates with Nextcloud to allow editing of office docs in the webinterface
+
 # Update GitHub with any changes to Docker scripts.
 /home/ryan/scripts/docker/_update_git.sh
 

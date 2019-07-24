@@ -56,8 +56,8 @@ docker create \
   -v /etc/localtime:/etc/localtime:ro \
   -v /var/log/homeassistant/home-assistant.log:/config/home-assistant.log \
   -v /storage/scratchpad/:/scratchpad \
-  `#--device /dev/bus/usb/002/024` \
-  `#--device /dev/bus/usb/002/024:/dev/bus/usb/002/024` \
+  `#--device /dev/bus/usb/002/06` \
+  `#--device /dev/bus/usb/002/06:/dev/bus/usb/002/06` \
   -v /dev/bus/usb:/dev/bus/usb \
   `# ------- Traefik Proxy Section -------` \
   -l "traefik.enable=true" \

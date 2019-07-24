@@ -1,0 +1,43 @@
+#!/bin/bash
+
+# Onlyoffice integrates with Nextcloud to allow editing of office docs in the webinterface
+
+# Update GitHub with any changes to Docker scripts.
+#/home/ryan/scripts/docker/_update_git.sh
+
+# Get sensitive info from .conf file
+CONF_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+typeset -A secrets    # Define array to hold variables 
+while read line; do
+  if echo $line | grep -F = &>/dev/null; then
+    varname=$(echo "$line" | cut -d '=' -f 1); secrets[$varname]=$(echo "$line" | cut -d '=' -f 2-)
+  fi
+done < $CONF_DIR/onlyoffice.conf
+#echo ${secrets[FQDN]}
+
+NAME="onlyoffice"
+SUBDOMAIN=$NAME
+FQDN="${secrets[FQDN]}"
+
+docker rm -f -v $NAME
+
+#docker run -d \
+docker create \
+  --name=$NAME \
+  --restart="unless-stopped" \
+  -p 8880:80 \
+  -v /storage/Docker/onlyoffice/config/local.json:/etc/onlyoffice/documentserver/local.json \
+  `# ------- Traefik Proxy Section -------` \
+  -l "traefik.enable=true" \
+  -l "traefik.frontend.rule=Host:$SUBDOMAIN.$FQDN" \
+  -l "traefik.port=80" \
+  -l "traefik.frontend.passHostHeader=true" \
+  `# -------------------------------------` \
+  onlyoffice/documentserver
+
+# Add to traefik-proxy network so it can reach the other container - '--link' options above doesn't seem to work proerly if we try to add straight to traefik-proxy above.
+docker network connect bridge $NAME
+docker network connect traefik-proxy $NAME
+
+# Start container
+docker start $NAME
