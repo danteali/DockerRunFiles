@@ -1,0 +1,19 @@
+#!/bin/bash
+
+NAME=mc_itzg_spigot
+
+docker rm -f -v $NAME
+
+# Create container, then add to traefik-proxy network, then start it to make sure it has access to it's 'normal' network
+# We use 'docker create' to create the container, then 'docker network connect' to add the container to traefik-proxy,
+# then 'docker start' to startup the container.
+# Also '-d' not needed with 'docker create' since 'docker start' sutomatically starts in detached mode.
+
+docker run -d \
+  --name $NAME \
+  --restart="unless-stopped" \
+  -p 25565:25565 \
+  -v /storage/Docker/minecraft/itzg/spigot/data:/data \
+  -e TYPE=SPIGOT \
+  -e EULA=TRUE \
+  itzg/minecraft-server --noconsole

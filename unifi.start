@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Update GitHub with any changes to Docker scripts.
-/home/ryan/scripts/docker/_update_git.sh
+#/home/ryan/scripts/docker/_update_git.sh
 
 # Get sensitive info from .conf file
 CONF_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
@@ -29,6 +29,7 @@ docker create \
   --restart="unless-stopped" \
   -p 8080:8080 \
   -p 8443:8443 \
+  `#-p 8843:8843` \
   -p 3478:3478/udp \
   -p 10001:10001/udp \
   -v /storage/Docker/unifi/data:/unifi/data \
@@ -37,9 +38,12 @@ docker create \
   `# ------- Traefik Proxy Section -------` \
   `#--network traefik-proxy` \
   -l "traefik.enable=true" \
-  -l "traefik.port=8443" \
-  -l "traefik.frontend.rule=Host:$NAME.$FQDN" \
-  -l traefik.protocol=https \
+  -l "traefik.unifi.port=8443" \
+  -l "traefik.unifi.protocol=https" \
+  -l "traefik.unifi.frontend.rule=Host:$NAME.$FQDN" \
+  -l "traefik.portal.frontend.rule=Host:portal.$FQDN" \
+  -l "traefik.portal.port=443" \
+  -l "traefik.portal.protocol=https" \
   `# -------------------------------------` \
   jacobalberty/unifi:latest
 #  jacobalberty/unifi:5.6
