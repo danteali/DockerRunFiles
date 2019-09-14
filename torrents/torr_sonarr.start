@@ -1,5 +1,10 @@
 #!/bin/bash
 
+
+#  - Stopped working early Aug after image update - noticed on 8th Aug. Last working download was 1st Aug. 
+#  - Build 2.0.0.5322-ls27 released 24th July, updated to 2.0.0.5322-ls28 on 1st Aug and 2.0.0.5322-ls29 on 3rd Aug.
+#  - Restored duplicacy backup from 2nd Aug 3am and build 2.0.0.5322-ls28 - left tag static for now
+
 docker rm -f -v torr_sonarr > /dev/null 2>&1
 
 
@@ -15,6 +20,8 @@ if [[ $1 == "-local" ]]; then
     -v /storage/Media/Video/TV:/tv \
     -v /storage/scratchpad/downloads:/downloads \
     linuxserver/sonarr
+    #linuxserver/sonarr:2.0.0.5322-ls27
+    #linuxserver/sonarr:2.0.0.5322-ls28 
 else
 
   if [[ $1 != "-nochecks" ]]; then
@@ -39,6 +46,8 @@ else
     -v /storage/scratchpad/downloads:/downloads \
     --net=container:torr_pia \
     linuxserver/sonarr
+    #linuxserver/sonarr:2.0.0.5322-ls27
+    #linuxserver/sonarr:2.0.0.5322-ls28 
 fi
 
 if [[ $1 != "-nochecks" ]]; then

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Update GitHub with any changes to Docker scripts (timeout to default No after 5s).
+# Update GitHub with any changes to Docker scripts (timeout to default No after 10s).
 read -r -n 10 -t 5 -p "`echo -e $'\e[0;35m'`Do you wish to update git repo for docker run scripts? [y/N] `echo -e $'\n\e[1;35m'`(Script will continue without updating repo if no response in 5s)`echo -e $'\e[0m'`" response
 response=${response:-No}    # Default response
 if [[ "$response" =~ ^([yY][eE][sS]|[yY])+$ ]]; then
@@ -15,11 +15,11 @@ while read line; do
   if echo $line | grep -F = &>/dev/null; then
     varname=$(echo "$line" | cut -d '=' -f 1); secrets[$varname]=$(echo "$line" | cut -d '=' -f 2-)
   fi
-done < $CONF_DIR/unifi.conf
-#echo ${secrets[FQDN]}
+done < $CONF_DIR/syncthing.conf
+#echo ${secrets[FQDN]}; echo ${secrets[USERNAME]}; echo ${secrets[PASSWORD]}
 
 FQDN="${secrets[FQDN]}"
-NAME=unifi
+NAME="syncthing"
 
 docker rm -f -v $NAME
 
@@ -30,29 +30,26 @@ docker rm -f -v $NAME
 
 #docker run -d \
 docker create \
-  --name $NAME \
   --restart="unless-stopped" \
-  -p 8080:8080 \
-  -p 8443:8443 \
-  `#-p 8444:443` \
-  `#-p 8843:8843` \
-  -p 3478:3478/udp \
-  -p 10001:10001/udp \
-  -v /storage/Docker/unifi/data:/unifi/data \
-  -e TZ='Europe/London' \
-  -e RUNAS_UID0='false' \
+  --name=$NAME \
+  -e TZ=Europe/London \
+  -e UMASK_SET=022 \
+  -p 8384:8384 \
+  -p 22000:22000 \
+  -p 21027:21027/udp \
+  -e PUID=1000 \
+  -e PGID=1000 \
+  -v /storage/Docker/syncthing/config:/config \
+  -v /storage/Backup:/Backup \
+  -v /storage/Docker:/Docker \
+  -v /storage/Media:/Media \
+  -v /storage/scratchpad:/scratchpad \
   `# ------- Traefik Proxy Section -------` \
-  `#--network traefik-proxy` \
   -l "traefik.enable=true" \
-  -l "traefik.unifi.port=8443" \
-  -l "traefik.unifi.protocol=https" \
-  -l "traefik.unifi.frontend.rule=Host:$NAME.$FQDN" \
-  -l "traefik.portal.frontend.rule=Host:portal.$FQDN" \
-  -l "traefik.portal.port=443" \
-  -l "traefik.portal.protocol=https" \
+  -l "traefik.port=8384" \
+  -l "traefik.frontend.rule=Host:$NAME.$FQDN" \
   `# -------------------------------------` \
-  jacobalberty/unifi:latest
-#  jacobalberty/unifi:5.6
+  linuxserver/syncthing 
 
 # Add to bridge & traefik-proxy network so it can reach the other container
 docker network connect bridge $NAME
@@ -60,3 +57,10 @@ docker network connect traefik-proxy $NAME
 
 # Start container
 docker start $NAME
+
+# Increase inotify monitoring limits since Documents folder is large
+sleep 2
+docker exec syncthing bash -c 'echo "fs.inotify.max_user_watches=307200" | tee -a /etc/sysctl.conf'
+docker exec syncthing bash -c 'pkill syncthing'
+
+

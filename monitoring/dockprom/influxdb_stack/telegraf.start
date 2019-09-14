@@ -34,5 +34,6 @@ docker run -d \
   -e "HOST_PROC=/rootfs/proc" \
   -e "HOST_SYS=/rootfs/sys" \
   -e "HOST_ETC=/rootfs/etc" \
-  telegraf
+  telegraf:1.11.5
+  #telegraf
 

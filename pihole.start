@@ -2,8 +2,13 @@
 
 # Frontend explicitly defined in the traefik.toml file. Note that traefik.enable=false below
 
-# Update GitHub with any changes to Docker scripts.
-/home/ryan/scripts/docker/_update_git.sh
+# Update GitHub with any changes to Docker scripts (timeout to default No after 10s).
+read -r -n 10 -t 5 -p "`echo -e $'\e[0;35m'`Do you wish to update git repo for docker run scripts? [y/N] `echo -e $'\n\e[1;35m'`(Script will continue without updating repo if no response in 5s)`echo -e $'\e[0m'`" response
+response=${response:-No}    # Default response
+if [[ "$response" =~ ^([yY][eE][sS]|[yY])+$ ]]; then
+    /home/ryan/scripts/docker/_update_git.sh
+fi
+echo
 
 # Get sensitive info from .conf file
 CONF_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
@@ -57,6 +62,8 @@ docker run -d \
   -l "traefik.frontend.rule=Host:pihole.$FQDN,{catchall:.*}" \
   -l "traefik.frontend.priority=1" \
   `# -------------------------------------` \
+  `# Dont update image with watchtower` \
+  -l com.centurylinklabs.watchtower.enable=false \
   pihole/pihole:latest
 
 

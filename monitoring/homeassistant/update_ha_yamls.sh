@@ -79,12 +79,21 @@ while read -r files; do
 done
 
 
-# Delete known_devices.yaml2 since we don't want to continually overwrite any newly discovered devices
+# Delete known_devices.yaml2 and google_calendars.yaml2 since we don't want to continually overwrite any newly discovered devices or calendars
 KNOWN_DEV2=/storage/Docker/home-assistant/config/known_devices.yaml2
 if [[ -f "$KNOWN_DEV2" ]]; then 
     if [[ $VERBOSE = 1 ]]; then 
         echo
         echo "${magenta}Deleting known_devices.yaml2...${reset}"
+        echo
+    fi
+    sudo rm $KNOWN_DEV2 > /dev/null 2>&1
+fi
+KNOWN_DEV2=/storage/Docker/home-assistant/config/google_calendars.yaml2
+if [[ -f "$KNOWN_DEV2" ]]; then 
+    if [[ $VERBOSE = 1 ]]; then 
+        echo
+        echo "${magenta}Deleting google_calendars.yaml2...${reset}"
         echo
     fi
     sudo rm $KNOWN_DEV2 > /dev/null 2>&1

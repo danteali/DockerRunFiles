@@ -8,8 +8,13 @@
 # the same addresses but the traffic gets bounced directly back to this server without routing
 # outside the LAN.
 
-# Update GitHub with any changes to Docker scripts.
-/home/ryan/scripts/docker/_update_git.sh
+# Update GitHub with any changes to Docker scripts (timeout to default No after 10s).
+read -r -n 10 -t 5 -p "`echo -e $'\e[0;35m'`Do you wish to update git repo for docker run scripts? [y/N] `echo -e $'\n\e[1;35m'`(Script will continue without updating repo if no response in 5s)`echo -e $'\e[0m'`" response
+response=${response:-No}    # Default response
+if [[ "$response" =~ ^([yY][eE][sS]|[yY])+$ ]]; then
+    /home/ryan/scripts/docker/_update_git.sh
+fi
+echo
 
 # Get sensitive info from .conf file
 CONF_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
@@ -31,8 +36,10 @@ docker create \
   --restart="unless-stopped" \
   --name="$NAME" \
   -v /storage/Docker/traefik/config/traefik.toml:/etc/traefik/traefik.toml \
+  -v /storage/Docker/traefik/config/rules.toml:/etc/traefik/rules.toml \
   -v /storage/Docker/traefik/config/acme.json:/etc/traefik/acme.json \
   -v /storage/Docker/traefik/config/htpasswds:/etc/traefik/htpasswds \
+  -v /storage/Docker/traefik/config/certs:/etc/traefik/certs \
   -v /var/run/docker.sock:/var/run/docker.sock \
   -v /var/log/traefik/traefik.log:/var/log/traefik/traefik.log \
   -v /var/log/traefik/access.log:/var/log/traefik/access.log \

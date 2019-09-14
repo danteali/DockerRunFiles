@@ -18,10 +18,8 @@ NAME="ubooquity"
 
 docker rm -f -v $NAME
 
-# Create container, then add to traefik-proxy network, then start it to make sure it has access to it's 'normal' network
-# We use 'docker create' to create the container, then 'docker network connect' to add the container to traefik-proxy,
-# then 'docker start' to startup the container.
-# Also '-d' not needed with 'docker create' since 'docker start' sutomatically starts in detached mode.
+# Since we can't assign two networks with 'docker run' we need to create the container first,
+# then add to traefik-proxy network and default bridge network before starting it.
 
 #docker run -d \
 docker create \

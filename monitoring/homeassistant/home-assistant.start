@@ -43,7 +43,7 @@ docker create \
   --name=$NAME \
   --restart="unless-stopped" \
   -l org.label-schema.group="monitoring" \
-  `#-p 8123:8123` \
+  -p 8123:8123 \
   `#-p 8124:8124` \
   `#-p 8300:8300` \
   `#-p 8300:8300/udp` \
