@@ -20,7 +20,7 @@ while read line; do
     varname=$(echo "$line" | cut -d '=' -f 1); secrets[$varname]=$(echo "$line" | cut -d '=' -f 2-)
   fi
 done < $CONF_DIR/mc_itzg_spigot.conf
-#echo ${secrets[FQDN]}; echo ${secrets[USERNAME]}; echo ${secrets[PASSWORD]}
+#echo ${secrets[FQDN]}
 
 FQDN="${secrets[FQDN]}"
 

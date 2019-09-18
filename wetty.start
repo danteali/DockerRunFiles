@@ -37,9 +37,10 @@ docker create \
   --restart="unless-stopped" \
   -e WETTY_USER=admin \
   -e WETTY_HASH=${secrets[WETTY_HASH]} \
+  -v /storage/Backup/Current/Nextcloud/ryan/files/System\ Stuff/putty/keys/crush.privkey.ppk:/privkey.ppk \
   -p 57575:3000 \
   `# ------- Traefik Proxy Section -------` \
-  -l "traefik.enable=false" \
+  -l "traefik.enable=true" \
   -l "traefik.port=3000" \
   -l "traefik.frontend.rule=Host:$NAME.$FQDN" \
   `# -------------------------------------` \
