@@ -3,7 +3,7 @@
 # Update config files
     echo
     echo "Updating any changed .yaml files..."
-    /home/ryan/scripts/docker/monitoring/homeassistant/update_ha_yamls.sh
+    /home/ryan/scripts/docker/monitoring/homeassistant/1_update_ha_yamls.sh
 
 # config check
     echo

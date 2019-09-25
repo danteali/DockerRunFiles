@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Update config files, check config, push to github
-    /home/ryan/scripts/docker/monitoring/homeassistant/update_ha_config_check_git.sh
+    /home/ryan/scripts/docker/monitoring/homeassistant/3_update_ha_config_check_git.sh
 
 # Restart HA
     /home/ryan/scripts/docker/monitoring/homeassistant/restart_homeassistant.sh

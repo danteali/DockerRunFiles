@@ -11,12 +11,12 @@
 # ============================================================================================
 
 # Update config files, check config, push to github
-    /home/ryan/scripts/docker/monitoring/homeassistant/update_ha_config_check.sh
+    /home/ryan/scripts/docker/monitoring/homeassistant/2_update_ha_config_check.sh
 
 # Push to github if no errors in config check
     echo
     echo "Pushing changed files to github..."
-    /home/ryan/scripts/docker/monitoring/homeassistant/update_ha_git.sh
+    /home/ryan/scripts/docker/monitoring/homeassistant/github_update.sh
     
 echo
 

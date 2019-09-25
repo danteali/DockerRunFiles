@@ -13,7 +13,7 @@ done < $CONF_DIR/reload.conf
 HOST="${secrets[HOST]}"
 
 # Update config files, check config, push to github
-    /home/ryan/scripts/docker/monitoring/homeassistant/update_ha_config_check_git.sh
+    /home/ryan/scripts/docker/monitoring/homeassistant/3_update_ha_config_check_git.sh
 
 curl -X POST -H "Content-Type: application/json"  $HOST/api/services/homeassistant/reload_core_config
 
