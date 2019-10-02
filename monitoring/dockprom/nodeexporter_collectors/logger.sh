@@ -12,13 +12,12 @@
 # ./logger.sh "snapraid" "snapraid" "1"
 # ./logger.sh "docker_nextcloud" "nextcloud" "running"
 
-
-# Specify where output file should be saved.
-OUTPUTFILE=/storage/Docker/dockprom/nodeexporter/textfile_collector/$SUFFIX.prom
-
 # Define variables
 SUFFIX=$1
 ACTION=$2
 METRIC=$3
+
+# Specify where output file should be saved.
+OUTPUTFILE=/storage/Docker/dockprom/nodeexporter/textfile_collector/$SUFFIX.prom
 
 echo "node_$SUFFIX{action=\"$ACTION\"} $METRIC" > $OUTPUTFILE
