@@ -11,14 +11,14 @@ docker run -d \
   --network=dockprom_monitor-net \
   --ulimit memlock=-1:-1 \
   -p 9200:9200 \
-  `#-p 9300:9300` \
+      `#-p 9300:9300` \
   -v /storage/Docker/elastiflow/data:/usr/share/elasticsearch/data \
-  `#-v /storage/Docker/elastiflow/config/elasticsearch/config:/usr/share/elasticsearch/config` \
-  `# Default mem allocation - 2GB, recommended for prod - 3GB` \
-  `#-e ES_JAVA_OPTS="-Xms2g -Xmx2g"` \
+      `#-v /storage/Docker/elastiflow/config/elasticsearch/config:/usr/share/elasticsearch/config` \
   -e LS_JAVA_OPTS="-Xms1536m -Xmx1536m" \
-  `#-e ES_JAVA_OPTS="-Xms1g -Xmx1g"` \
-  `#-e ES_JAVA_OPTS="-Xms512m -Xmx512m"` \
+      `# Default mem allocation - 2GB, recommended for prod - 3GB` \
+      `#-e ES_JAVA_OPTS="-Xms2g -Xmx2g"` \
+      `#-e ES_JAVA_OPTS="-Xms1g -Xmx1g"` \
+      `#-e ES_JAVA_OPTS="-Xms512m -Xmx512m"` \
   -e "cluster.name=elastiflow" \
   -e "bootstrap.memory_lock=true" \
   -e "network.host=0.0.0.0" \
@@ -31,7 +31,8 @@ docker run -d \
   -e http.cors.enabled=true \
   -e http.cors.allow-headers=X-Requested-With,X-Auth-Token,Content-Type,Content-Length,Authorization \
   -e http.cors.allow-credentials=true \
-  docker.elastic.co/elasticsearch/elasticsearch-oss:7.0.1
+  docker.elastic.co/elasticsearch/elasticsearch-oss:7.3.0
+  #docker.elastic.co/elasticsearch/elasticsearch-oss:7.0.1
   #docker.elastic.co/elasticsearch/elasticsearch-oss:6.6.1
 
 # Wait then send command to tell elasticsearch that it is a single node and not to try to replicate 

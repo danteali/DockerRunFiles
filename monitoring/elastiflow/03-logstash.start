@@ -20,30 +20,31 @@ docker run -d \
   -l org.label-schema.group="monitoring" \
   --network=dockprom_monitor-net \
   -p 5044:5044 \
-  `#-p 2055:2055/udp` \
-  `#-p 6343:6343/udp` \
   -p 4739:4739/udp \
+      `#-p 2055:2055/udp` \
+      `#-p 6343:6343/udp` \
   -v /storage/Docker/elastiflow/config/logstash/conf.d/:/etc/logstash/elastiflow/conf.d/ \
-  `# Default mem allocation - 3GB, recommended for prod - 4GB` \
-  `#-e LS_JAVA_OPTS="-Xms3g -Xmx3g"` \
-  `#-e LS_JAVA_OPTS="-Xms2560m -Xmx2560m"` \
   -e LS_JAVA_OPTS="-Xms2g -Xmx2g" \
-  `#-e LS_JAVA_OPTS="-Xms1536m -Xmx1536m"` \
-  `#-e LS_JAVA_OPTS="-Xms1g -Xmx1g"` \
-  `#-e LS_JAVA_OPTS="-Xms512m -Xmx512m"` \
+      `# Default mem allocation - 3GB, recommended for prod - 4GB` \
+      `#-e LS_JAVA_OPTS="-Xms3g -Xmx3g"` \
+      `#-e LS_JAVA_OPTS="-Xms2560m -Xmx2560m"` \
+      `#-e LS_JAVA_OPTS="-Xms1536m -Xmx1536m"` \
+      `#-e LS_JAVA_OPTS="-Xms1g -Xmx1g"` \
+      `#-e LS_JAVA_OPTS="-Xms512m -Xmx512m"` \
   -e "ELASTIFLOW_DEFAULT_APPID_SRCTYPE=__UNKNOWN" \
   -e "ELASTIFLOW_RESOLVE_IP2HOST=true" \
   -e "ELASTIFLOW_NAMESERVER=1.1.1.1" \
-  `#-e "ELASTIFLOW_NETFLOW_IPV4_PORT=2055"` \
-  `#-e "ELASTIFLOW_SFLOW_IPV4_PORT=6343"` \
-  `#-e "ELASTIFLOW_IPFIX_TCP_IPV4_PORT=4739"` \
+      `#-e "ELASTIFLOW_NETFLOW_IPV4_PORT=2055"` \
+      `#-e "ELASTIFLOW_SFLOW_IPV4_PORT=6343"` \
+      `#-e "ELASTIFLOW_IPFIX_TCP_IPV4_PORT=4739"` \
   -e "ELASTIFLOW_IPFIX_UDP_IPV4_PORT=4739" \
   -e "ELASTIFLOW_ES_HOST=${secrets[ELASTIFLOW_ES_HOST]}" \
   `# Default DNS Cache = 25000` \
   -e "ELASTIFLOW_DNS_HIT_CACHE_SIZE=10000" \
   -e "ELASTIFLOW_IPFIX_UDP_WORKERS=2" \
   -e "ELASTIFLOW_IPFIX_UDP_QUEUE_SIZE=2000" \
-  robcowart/elastiflow-logstash-oss:3.5.0_7.0.1
+  robcowart/elastiflow-logstash-oss:3.5.1
+  #robcowart/elastiflow-logstash-oss:3.5.0_7.0.1
   #robcowart/elastiflow-logstash-oss:3.4.1_6.1.3
 
 #NOTES:

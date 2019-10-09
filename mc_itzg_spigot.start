@@ -42,8 +42,9 @@ docker create \
   -v /storage/Docker/minecraft/itzg/spigot/data:/data \
   -e TYPE=SPIGOT \
   -e EULA=TRUE \
-  -e INIT_MEMORY=1G \
-  -e MAX_MEMORY=3G \
+  -e INIT_MEMORY=2G \
+  -e MAX_MEMORY=4G \
+  -l com.centurylinklabs.watchtower.enable=false \
   `# ------- Traefik Proxy Section -------` \
   -l "traefik.enable=true" \
   -l "traefik.frontend.rule=Host:dynmap.$FQDN" \

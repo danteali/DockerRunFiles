@@ -25,22 +25,24 @@ docker create \
   --name $NAME \
   --restart="unless-stopped" \
   -l org.label-schema.group="monitoring" \
-  `#--network=dockprom_monitor-net` \
+    `#--network=dockprom_monitor-net` \
   -p 5601:5601 \
-  `#-v /storage/Docker/elastiflow/config/kibana/config:/usr/share/kibana/config` \
+      `#-v /storage/Docker/elastiflow/config/kibana/config:/usr/share/kibana/config` \
   -e "SERVER_HOST=0.0.0.0" \
   -e "ELASTICSEARCH_URL=${secrets[HOST]}" \
   -e "ELASTICSEARCH_HOSTS=${secrets[HOST]}" \
   -e "SERVER_PORT=5601" \
   -e "KIBANA_DEFAULTAPPID=dashboard/653cf1e0-2fd2-11e7-99ed-49759aed30f5" \
   -e "LOGGING_QUIET=true" \
+  -e "LOGGING_DEST=stdout" \
   `# ------- Traefik Proxy Section -------` \
   -l "traefik.enable=true" \
   -l "traefik.port=5601" \
   -l "traefik.frontend.rule=Host:kibana.$FQDN" \
   -l "traefik.frontend.auth.basic.users=${secrets[KIBANA_USER]}:${secrets[KIBANA_PASS]}" \
   `# -------------------------------------` \
-  docker.elastic.co/kibana/kibana-oss:7.0.1
+  docker.elastic.co/kibana/kibana-oss:7.3.0
+  #docker.elastic.co/kibana/kibana-oss:7.0.1
   #docker.elastic.co/kibana/kibana-oss:6.6.1
 
 # Add to traefik-proxy network so it can reach the other container
