@@ -1,0 +1,42 @@
+#!/bin/bash
+
+# Do initial copy of config.py file to local storage:
+#docker cp mc_overviewer:/home/minecraft/config.py /storage/Docker/minecraft/overviewer/config/
+
+# Setup config per guidance here:
+# http://docs.overviewer.org/en/latest/config/#a-simple-example
+# Need to specify each world to render e.g.
+# worlds["Castaway"] = "/home/username/server/Castaway"
+# worlds["Castaway_nether"] = "/home/username/server/Castaway_nether"
+#
+# Then specify a render for each world (or multiple per world if you want) e.g.
+# - render mode can be: normal, lighting, smooth_lighting, smooth_night, night, 
+#   nether, nether_lighting, nether_smooth_lighting, cave
+# - no need to use 'dimension' setting as running on server with only one dimension per world folder
+
+
+
+NAME=mc_overviewer
+
+docker rm -f -v $NAME
+
+# Since we can't assign two networks with 'docker run' we need to create the container first,
+# then add to traefik-proxy network and default bridge network (so that it is still accessible on
+# IP:PORT) before starting it.
+
+#docker run -d \
+docker create \
+  --name $NAME \
+  --restart="unless-stopped" \
+  -e MINECRAFT_VERSION="1.14" \
+  -v /storage/Docker/minecraft/itzg/spigot/data/:/home/minecraft/server/:ro \
+  -v /storage/scratchpad/_no_backup/minecraft_overviewer/:/home/minecraft/render/:rw \
+  -v /storage/Docker/minecraft/overviewer/config/config.py:/home/minecraft/config.py:rw \
+  mide/minecraft-overviewer:latest
+
+# Add to bridge & traefik-proxy network so it can reach the other container
+docker network connect bridge $NAME
+docker network connect traefik-proxy $NAME
+
+# Start container
+docker start $NAME
