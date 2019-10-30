@@ -58,3 +58,20 @@ docker network connect traefik-proxy $NAME
 
 # Start container
 docker start $NAME
+
+sleep 300
+
+#docker exec mc_itzg_spigot rcon-cli mv unload Castaway_clone
+docker exec mc_itzg_spigot rcon-cli mv unload Castaway_clone_nether
+docker exec mc_itzg_spigot rcon-cli mv unload Castaway_clone_the_end
+docker exec mc_itzg_spigot rcon-cli mv unload DaddyJames
+docker exec mc_itzg_spigot rcon-cli mv unload DaddyJames_nether
+docker exec mc_itzg_spigot rcon-cli mv unload DaddyJames_the_end
+docker exec mc_itzg_spigot rcon-cli mv unload Broland_ep29
+docker exec mc_itzg_spigot rcon-cli mv unload Broland_ep29_nether
+docker exec mc_itzg_spigot rcon-cli mv unload Broland_ep29_the_end
+docker exec mc_itzg_spigot rcon-cli mv unload sandbox
+
+# To reload worlds run:
+# docker exec mc_itzg_spigot rcon-cli mv reload
+

@@ -37,19 +37,12 @@ docker create \
   --name $NAME \
   --restart="unless-stopped" \
   -p 25566:25565 \
-  -p 25567:8123 \
-  `#-p 9564:8080` \
   -v /storage/Docker/minecraft/itzg/paper/data:/data \
   -e TYPE=PAPER \
   -e EULA=TRUE \
   -e INIT_MEMORY=1G \
   -e MAX_MEMORY=2G \
   -l com.centurylinklabs.watchtower.enable=false \
-  `# ------- Traefik Proxy Section -------` \
-  -l "traefik.enable=true" \
-  -l "traefik.frontend.rule=Host:dynmap_paper.$FQDN" \
-  -l "traefik.port=8123" \
-  `# -------------------------------------` \
   itzg/minecraft-server --noconsole
 
 # Add to bridge & traefik-proxy network so it can reach the other container
