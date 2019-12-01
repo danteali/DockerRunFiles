@@ -66,6 +66,9 @@ docker create \
   -l "traefik.frontend.whiteList.useXForwardedFor=true" \
   -l "traefik.frontend.passHostHeader=true" \
   `# -------------------------------------` \
+  --log-driver json-file \
+  --log-opt max-size=20m \
+  --log-opt max-file=10 \
   homeassistant/home-assistant
 
 

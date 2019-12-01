@@ -28,6 +28,9 @@ docker run -d \
   -e PUID=911 -e PGID=911 \
   -e TZ='Europe/London' \
   -v /storage/Docker/UNMS/config:/config \
+  --log-driver json-file \
+  --log-opt max-size=20m \
+  --log-opt max-file=10 \
   oznu/unms:0.13.1
   #oznu/unms:latest
   #oznu/unms:0.13.0r3

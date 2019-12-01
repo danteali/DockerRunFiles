@@ -24,4 +24,7 @@ docker run -d \
   -e "webhook=${secrets[SL_WEBHOOK_URL]}" \
   -e image_regexp='([^l]|[^r]l|[^u]rl|[^c]url)$' \
   -v /var/run/docker.sock:/var/run/docker.sock \
+  --log-driver json-file \
+  --log-opt max-size=20m \
+  --log-opt max-file=10 \
   int128/slack-docker

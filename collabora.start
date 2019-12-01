@@ -1,6 +1,8 @@
 #!/bin/bash
 
+# Now using OnlyOffice instead - probably
 # Collabora integrates with Nextcloud to allow editing of office docs in the webinterface
+
 
 # Update GitHub with any changes to Docker scripts (timeout to default No after 5s).
 read -r -n 10 -t 5 -p "`echo -e $'\e[0;35m'`Do you wish to update git repo for docker run scripts? [y/N] `echo -e $'\n\e[1;35m'`(Script will continue without updating repo if no response in 5s)`echo -e $'\e[0m'`" response
