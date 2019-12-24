@@ -14,7 +14,7 @@ do
 done
 
 # Configure macvlan
-sudo ip link add lan_net-shim link enp5s0 type macvlan  mode bridge
+sudo ip link add lan_net-shim link enp4s0 type macvlan  mode bridge
 sudo ip addr add <server_IP>/32 dev lan_net-shim
 sudo ip link set lan_net-shim up
 sudo ip route add <Container IP Range/CIDR Notation> dev lan_net-shim
