@@ -8,9 +8,6 @@ docker run -d \
   --name=$NAME \
   --restart="unless-stopped" \
   `#--net=host` \
-  --log-driver json-file \
-  --log-opt max-size=10m \
-  --log-opt max-file=10 \
   -l org.label-schema.group="monitoring" \
   -v /storage/Docker/zigbee2mqtt/data:/app/data \
   -v /storage/Docker/zigbee2mqtt/data/zigbee-shepherd-converters:/app/node_modules/zigbee-shepherd-converters \
