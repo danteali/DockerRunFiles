@@ -1,7 +1,12 @@
 #!/bin/bash
 
 # Update GitHub with any changes to Docker scripts.
-/home/ryan/scripts/docker/_update_git.sh
+read -r -n 10 -t 5 -p "`echo -e $'\e[0;35m'`Do you wish to update git repo for docker run scripts? [y/N] `echo -e $'\n\e[1;35m'`(Script will continue without updating repo if no response in 5s)`echo -e $'\e[0m'`" response
+response=${response:-No}    # Default response
+if [[ "$response" =~ ^([yY][eE][sS]|[yY])+$ ]]; then
+    /home/ryan/scripts/docker/_update_git.sh
+fi
+echo
 
 # Get sensitive info from .conf file
 CONF_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
@@ -11,11 +16,12 @@ while read line; do
     varname=$(echo "$line" | cut -d '=' -f 1); secrets[$varname]=$(echo "$line" | cut -d '=' -f 2-)
   fi
 done < $CONF_DIR/calibre.conf
-#echo ${secrets[FQDN]}
+#echo ${secrets[FQDN]}; echo ${secrets[GUAC_USER]}; echo ${secrets[GUAC_PASS]}
 
 
-NAME="calibre-gui"
-SUBDOMAIN="calibre"
+NAME="calibre"
+SUBDOMAIN_GUAC="calibre"
+#SUBDOMAIN_WEB="calibre-gui"
 FQDN="${secrets[FQDN]}"
 
 docker rm -f -v $NAME
@@ -29,25 +35,25 @@ docker rm -f -v $NAME
 docker create \
   --name=$NAME \
   --restart="unless-stopped" \
-  -v /storage/Media/Books/calibre_library:/books \
-  -v /storage/Docker/calibre-web/app:/calibre-web/app \
-  -v /storage/Docker/calibre-web/config:/calibre-web/config \
-  -v /storage/Docker/calibre-web/kindlegen:/calibre-web/kindlegen \
-  -e USE_CONFIG_DIR=true \
-  `#-e PGID=1000 -e PUID=1000` \
-  `#-e PGID=0 -e PUID=0` \
-  -e SET_CONTAINER_TIMEZONE=true \
-  -e CONTAINER_TIMEZONE=Europe/London \
-  -p 6083:8083 \
+  -e PUID=1000 -e PGID=1000 \
+  -e TZ=Europe/London \
+  -e GUAC_USER="${secrets[GUAC_USER]}" \
+  -e GUAC_PASS="${secrets[GUAC_PASS]}" \
+  -p 9080:8080 \
+  `#-p 9081:8081` \
+  -v /storage/Docker/calibre-linuxserverio/config:/config \
+  -v /storage/Media/Books/calibre_library:/library \
   `# ------- Traefik Proxy Section -------` \
   `#--network traefik-proxy` \
   -l "traefik.enable=true" \
-  -l "traefik.frontend.rule=Host:$SUBDOMAIN.$FQDN" \
-  -l "traefik.port=8083" \
+  -l "traefik.guac.frontend.rule=Host:$SUBDOMAIN_GUAC.$FQDN" \
+  -l "traefik.guac.port=8080" \
+  `#-l "traefik.web.frontend.rule=Host:$SUBDOMAIN_WEB.$FQDN"` \
+  `#-l "traefik.web.port=8081"` \
   `# -------------------------------------` \
-  technosoft2000/calibre-web
+  linuxserver/calibre
 
-# PGID & PUID are supposed to match the owner of the calibre DB file. 1000 didn't work initially, try 0 (root) if it doesn't work again.
+
 
 # Add to bridge & traefik-proxy network so it can reach the other container
 docker network connect bridge $NAME
