@@ -14,8 +14,8 @@ done < $CONF_DIR/calibre.conf
 #echo ${secrets[FQDN]}
 
 
-NAME="calibre-web"
-SUBDOMAIN="calibre-web"
+NAME="calibre-gui"
+SUBDOMAIN="calibre"
 FQDN="${secrets[FQDN]}"
 
 docker rm -f -v $NAME
