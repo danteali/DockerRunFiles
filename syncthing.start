@@ -59,8 +59,13 @@ docker network connect traefik-proxy $NAME
 docker start $NAME
 
 # Increase inotify monitoring limits since Documents folder is large
-sleep 2
-docker exec syncthing bash -c 'echo "fs.inotify.max_user_watches=307200" | tee -a /etc/sysctl.conf'
-docker exec syncthing bash -c 'pkill syncthing'
-
-
+# turns out this must be done on host system, not in container.
+#   sleep 2
+#   docker exec syncthing bash -c 'echo "fs.inotify.max_user_watches=307200" | tee -a /etc/sysctl.conf'
+#   docker exec syncthing bash -c 'pkill syncthing'
+# To increase immediately and temporarily run:
+#   sudo sysctl fs.inotify.max_user_watches=307200; sudo sysctl -p 
+# To increase permanently at next reboot run:
+#   echo fs.inotify.max_user_watches=307200 | sudo tee -a /etc/sysctl.conf
+# To view current limit:
+#   cat /proc/sys/fs/inotify/max_user_watches

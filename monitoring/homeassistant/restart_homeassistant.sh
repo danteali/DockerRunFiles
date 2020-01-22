@@ -16,13 +16,14 @@ while read line; do
     varname=$(echo "$line" | cut -d '=' -f 1); secrets[$varname]=$(echo "$line" | cut -d '=' -f 2-)
   fi
 done < $CONF_DIR/reload.conf
-#echo ${secrets[HOST]}
+#echo ${secrets[HOST]}; echo ${secrets[REST_API]}
 
 HOST="${secrets[HOST]}"
+REST_API=${secrets[REST_API]}
 
 # Call HA restart service
     echo
     echo "Making HA restart service call..."
-    curl -X POST -H "Content-Type: application/json"  $HOST/api/services/homeassistant/restart
+    curl -X POST -H "Authorization: Bearer $REST_API" -H "Content-Type: application/json" $HOST/api/services/homeassistant/restart
 
 echo
