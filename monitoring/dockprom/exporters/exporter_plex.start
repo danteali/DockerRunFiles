@@ -13,6 +13,9 @@ docker create \
   -v /storage/Docker/dockprom_influxdb/plex:/config \
   -e PGID=1000 -e PUID=1000 \
   -e TZ="Europe/London" \
+  --log-driver json-file \
+  --log-opt max-size=20m \
+  --log-opt max-file=10 \
   boerderij/varken
 
 docker network connect traefik-proxy $NAME
