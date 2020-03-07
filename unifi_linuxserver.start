@@ -32,29 +32,33 @@ docker rm -f -v $NAME
 docker create \
   --name $NAME \
   --restart="unless-stopped" \
-  -p 8080:8080 \
-  -p 8443:8443 \
-  `#-p 8444:443` \
-  `#-p 8843:8843` \
+    -e PUID=1000 \
+  -e PGID=1000 \
+  -e MEM_LIMIT=1024M `#optional` \
   -p 3478:3478/udp \
   -p 10001:10001/udp \
-  -v /storage/Docker/unifi/data:/unifi/data \
+  `#-p 1900:1900/udp` \
+  -p 8080:8080 \
+  -p 8081:8081 \
+  -p 8443:8443 \
+  -p 8843:8843 \
+  `#-p 8880:8880` \
+  -p 6789:6789 \
+  -v /storage/Docker/unifi_linuxserver/data:/config \
   -e TZ='Europe/London' \
-  -e RUNAS_UID0='false' \
   `# ------- Traefik Proxy Section -------` \
   `#--network traefik-proxy` \
   -l "traefik.enable=true" \
-  -l "traefik.unifi.port=8443" \
-  -l "traefik.unifi.protocol=https" \
-  -l "traefik.unifi.frontend.rule=Host:$NAME.$FQDN" \
-  -l "traefik.portal.frontend.rule=Host:portal.$FQDN" \
-  -l "traefik.portal.port=443" \
-  -l "traefik.portal.protocol=https" \
+  -l "traefik.unifigui.frontend.rule=Host:unifi.$FQDN" \
+  -l "traefik.unifigui.port=8443" \
+  -l "traefik.unifigui.protocol=https" \
+  -l "traefik.unifiadopt.frontend.rule=Host:unifi.$FQDN" \
+  -l "traefik.unifiadopt.frontend.entryPoints=unifiadopt" \
+  -l "traefik.unifiadopt.port=8080" \
   `# -------------------------------------` \
-  jacobalberty/unifi:latest
+  -l com.centurylinklabs.watchtower.enable='false' \
+  linuxserver/unifi-controller
 #  jacobalberty/unifi:5.6
-#  jacobalberty/unifi:5.10.25
-#  jacobalberty/unifi:5.9.29
 
 # Add to bridge & traefik-proxy network so it can reach the other container
 docker network connect bridge $NAME

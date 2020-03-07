@@ -19,7 +19,7 @@ done < $CONF_DIR/unifi.conf
 #echo ${secrets[FQDN]}
 
 FQDN="${secrets[FQDN]}"
-NAME=unifi
+NAME=unifi_5.10.25
 
 docker rm -f -v $NAME
 
@@ -38,7 +38,7 @@ docker create \
   `#-p 8843:8843` \
   -p 3478:3478/udp \
   -p 10001:10001/udp \
-  -v /storage/Docker/unifi/data:/unifi/data \
+  -v /storage/Docker/unifi_5.10.25/data:/unifi/data \
   -e TZ='Europe/London' \
   -e RUNAS_UID0='false' \
   `# ------- Traefik Proxy Section -------` \
@@ -51,10 +51,8 @@ docker create \
   -l "traefik.portal.port=443" \
   -l "traefik.portal.protocol=https" \
   `# -------------------------------------` \
-  jacobalberty/unifi:latest
-#  jacobalberty/unifi:5.6
-#  jacobalberty/unifi:5.10.25
-#  jacobalberty/unifi:5.9.29
+  -l com.centurylinklabs.watchtower.enable='false' \
+  jacobalberty/unifi:5.10.25
 
 # Add to bridge & traefik-proxy network so it can reach the other container
 docker network connect bridge $NAME
