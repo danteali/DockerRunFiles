@@ -23,7 +23,7 @@ PASSWORD=supersecretpassword
 ```
 
 ### Traefik
-A lot of these services are configured to use the Traefik reverse proxy to enable access from the WAN using a domain name which I own. Importantly Traefik automatically handles the request of SSL certs for any proxied services making it trivial to use https to access everything. 
+A lot of these services are configured to use the Traefik reverse proxy to enable access from the WAN using a domain name which I own. Traefik also allows access to these service on my LAN using the same URL rather than IP:PORT (IP:PORT also works just in case Traefik itself goes down). Importantly Traefik automatically handles the request of SSL certs for any proxied services making it trivial to use https to access everything. 
 
 I only expose the services which I know I'll need to access when away from the LAN. Exposed services are typically accessed on `https://subdomain.my_domain.com` which makes it nice and easy to access when at work/travelling/etc. Traefik is also configured to automatically set up a Let's Encrypt SSL cert for any proxied address.
 

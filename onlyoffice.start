@@ -38,7 +38,7 @@ docker create \
   -l "traefik.port=80" \
   -l "traefik.frontend.passHostHeader=true" \
   `# -------------------------------------` \
-  onlyoffice/documentserver
+  onlyoffice/documentserver:latest
 
 # Add to traefik-proxy network so it can reach the other container - '--link' options above doesn't seem to work proerly if we try to add straight to traefik-proxy above.
 docker network connect bridge $NAME
