@@ -40,7 +40,8 @@ docker create \
   -l "traefik.frontend.rule=Host:$NAME.$FQDN" \
   -l "traefik.frontend.auth.basic.users=${secrets[USERNAME]}:${secrets[PASSWORD]}" \
   `# -------------------------------------` \
-  openspeedtest/latest
+  mlabbe/openspeedtest
+  #openspeedtest/latest
 
 # Add to bridge & traefik-proxy network so it can reach the other container
 docker network connect bridge $NAME
