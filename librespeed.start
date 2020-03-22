@@ -34,7 +34,6 @@ docker create \
   --name=$NAME \
   -p 8098:80 \
   -e MODE=standalone \
-  -e PASSWORD="${secrets[PASSWORD]}" \
   `# ------- Traefik Proxy Section -------` \
   --network traefik-proxy \
   -l "traefik.enable=true" \
