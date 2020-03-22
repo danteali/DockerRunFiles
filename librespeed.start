@@ -17,11 +17,11 @@ while read line; do
   if echo $line | grep -F = &>/dev/null; then
     varname=$(echo "$line" | cut -d '=' -f 1); secrets[$varname]=$(echo "$line" | cut -d '=' -f 2-)
   fi
-done < $CONF_DIR/openspeedtest.conf
+done < $CONF_DIR/librespeed.conf
 #echo ${secrets[FQDN]}; echo ${secrets[USERNAME]}; echo ${secrets[PASSWORD]}
 
 FQDN="${secrets[FQDN]}"
-NAME="openspeedtest"
+NAME="librespeed"
 
 docker rm -f -v $NAME
 
@@ -32,16 +32,17 @@ docker rm -f -v $NAME
 docker create \
   --restart="unless-stopped" \
   --name=$NAME \
-  -p 8099:8080 \
+  -p 8098:80 \
+  -e MODE=standalone \
+  -e PASSWORD="${secrets[PASSWORD]}" \
   `# ------- Traefik Proxy Section -------` \
   --network traefik-proxy \
   -l "traefik.enable=true" \
-  -l "traefik.port=8080" \
+  -l "traefik.port=80" \
   -l "traefik.frontend.rule=Host:$NAME.$FQDN" \
   -l "traefik.frontend.auth.basic.users=${secrets[USERNAME]}:${secrets[PASSWORD]}" \
   `# -------------------------------------` \
-  openspeedtest/latest
-  #mlabbe/openspeedtest
+  adolfintel/speedtest
 
 # Add to bridge & traefik-proxy network so it can reach the other container
 docker network connect bridge $NAME
