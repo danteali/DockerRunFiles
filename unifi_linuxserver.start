@@ -55,9 +55,12 @@ docker create \
   -l "traefik.unifiadopt.frontend.rule=Host:unifi.$FQDN" \
   -l "traefik.unifiadopt.frontend.entryPoints=unifiadopt" \
   -l "traefik.unifiadopt.port=8080" \
+  -l "traefik.portal.frontend.rule=Host:portal.$FQDN" \
+  -l "traefik.portal.port=8843" \
+  -l "traefik.portal.protocol=https" \
   `# -------------------------------------` \
   -l com.centurylinklabs.watchtower.enable='false' \
-  linuxserver/unifi-controller
+  linuxserver/unifi-controller:latest
 #  jacobalberty/unifi:5.6
 
 # Add to bridge & traefik-proxy network so it can reach the other container
