@@ -48,9 +48,9 @@ Pihole's main job is an ad blocker for your network. It operates as a local DNS 
 #### Unexposed services and HTTPS access
 Our service URLs only receive an SSL certificate if they can be reached externally since Let's Encrypt needs to perform it's challenge/response to verify that we own the URL before issuing a certificate. However there is a mechanism to generate a wildcard certificate for our domain (e.g. `*.yourdomain.com`) and configure Traefik to use this for any URLs which do not get their own specifically generated certificate (see traefik.toml [entryPoints.https] section). I followed the guide [here](https://blog.thesparktree.com/generating-intranet-and-private-network-ssl) and used the generated certs in the traefik.toml [entryPoints.https] section. 
 
-### Containers woith their own LAN IP
-A couple of the containers I use become more useful if they have their own IP addres on the LAN (home-assistant, node-red). While not absolutely neccessary I found it useful as it enabled integration with some services to work better.
-To give a docker container it's own IP address on the LAN, first we need to create a network interface on the host machine for it. The purpose of this is to allow the host machine to communicate with the container since, by default for security reasons, if a container has it's own LAN IP the host machine is blocked from communicating directly with it. 
+### Containers with their own LAN IP
+A couple of the containers I use become more useful if they have their own IP address on the LAN (home-assistant, node-red). While not absolutely neccessary I found it useful as it enabled integration with some services to work better (e.g. alexa integration).
+To give a docker container its own IP address on the LAN, first we need to create a network interface on the host machine for it. The purpose of this is to allow the host machine to communicate with the container since, by default for security reasons, if a container has it's own LAN IP the host machine is blocked from communicating directly with it. 
 You can call the interface whatever you want, but I’m calling this one lan_net-shim:
 `sudo ip link add lan_net-shim link enp4s0 type macvlan  mode bridge`
 Now we need to configure the interface with our host's own LAN IP address and bring it up:
@@ -58,12 +58,10 @@ Now we need to configure the interface with our host's own LAN IP address and br
 sudo ip addr add 192.168.0.10/32 dev lan_net-shim
 sudo ip link set lan_net-shim up
 ```
-The last thing we need to do is to tell our host to use that interface when communicating with the containers. Decide what IP range you want to reserve for the containers and use it in the following command. For example here we have reserved `192.168.0.224/29` which gives the containers .225 to .231 to use (we don't use the first IP .224 as it's reserved for host <-> container network communication).
+Now we need to tell our host to use that interface when communicating with the containers. Decide what IP range you want to reserve for the containers and use it in the following command. For example here we have reserved `192.168.0.224/29` which gives the containers .225 to .231 to use (we don't use the first IP .224 as it's reserved for host <-> container network communication).
 `sudo ip route add 192.168.0.224/29 dev lan_net-shim`
-We put these commands in a script [here](https://github.com/danteali/DockerRunFiles/blob/master/macvlan/macvlan_docker.cleaned) to be run at host startup by crontab. Just make sure it prooperly reflects your own IP addresses and ethernet interface. 
-Also see guide [here](https://blog.oddbit.com/post/2018-03-12-using-docker-macvlan-networks/) which helped me.
-
-Then we need to create a docker network for any containers which get their own IP. Make sure to use corresponding IP addresses/ranges as used in host interface above, and the correct ethernet interface name of your host (get with `ifconfig`): 
+We put these commands in a script [here](https://github.com/danteali/DockerRunFiles/blob/master/macvlan/macvlan_docker.cleaned) to be run at host startup by crontab. Just make sure it properly reflects your own IP addresses and ethernet interface. 
+Then we need to create a docker network for any containers which get their own IP. Make sure to use the same IP addresses/ranges as used in the host interface above, and also the correct ethernet interface name of your host (get with `ifconfig`): 
 ```
 docker network create \
   -d macvlan \
@@ -73,11 +71,12 @@ docker network create \
   -o parent=enp4s0 \
   lan_net
 ```
-Then when starting a container use these options to give it it's own IP on the LAN. 
+Then when starting a container use these options to give it it's own IP on the LAN:
 ```
 --network lan_net \
 --ip=192.168.0.225 \
 ```
+Also see guide [here](https://blog.oddbit.com/post/2018-03-12-using-docker-macvlan-networks/) which helped me.
 
 ### aliases
 You can make command line interaction with docker a bit easier by adding these aliases to the `.bash_aliases` file in your home directory. You can type these aliases instead of the longer docker commands. You might need to install the JSON parser `jq` as some of these aliases use it to parse/prettify docker json output. Note that one of the aliases is `daliases` which will list all of the other aliases just in case you forget what they are!

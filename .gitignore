@@ -12,10 +12,16 @@
 !*.cleaned
 !traefik.toml_20190626
 #----------
+!_traefik_version2
+!_map_this_vol_to_t2_container
+!place_wildcard_certs_here
+#----------
+!docker_management
+!pihole
+!plex
+#----------
 !macvlan
 !macvlan_docker.cleaned
-#----------
-!plex
 #----------
 !torrents
 !custom_notify_grab.sh.radarr
@@ -49,6 +55,7 @@ unused
 *.conf
 *.zip
 *.ipcheck
+temp.sh
 #----------
 macvlan_docker.sh
 vm_macvlan_docker.sh

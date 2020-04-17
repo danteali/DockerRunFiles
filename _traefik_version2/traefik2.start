@@ -1,0 +1,51 @@
+#!/bin/bash
+
+# ==================================================================================================
+
+## Update GitHub with any changes to Docker scripts (timeout to default No after Xs).
+#read -r -n 10 -t 5 -p "`echo -e $'\e[0;35m'`Do you wish to update git repo for docker run scripts? [y/N] `echo -e $'\n\e[1;35m'`(Script will continue without updating repo if no response in 5s)`echo -e $'\e[0m'`" response
+#response=${response:-No}    # Default response = No
+#if [[ "$response" =~ ^([yY][eE][sS]|[yY])+$ ]]; then
+#    /home/ryan/scripts/docker/_update_git.sh
+#fi
+#echo
+
+# ==================================================================================================
+
+# Get sensitive info from .conf file
+CONF_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+typeset -A secrets    # Define array to hold variables 
+while read line; do
+  if echo $line | grep -F = &>/dev/null; then
+    varname=$(echo "$line" | cut -d '=' -f 1); secrets[$varname]=$(echo "$line" | cut -d '=' -f 2-)
+  fi
+done < $CONF_DIR/_secrets.conf
+ echo ${secrets[FQDN]}; 
+ echo ${secrets[TRAEFIK_NET]}; echo ${secrets[DOCKER_DATA]};
+
+# ==================================================================================================
+
+NAME="traefik2"
+
+echo ${secrets[DOCKER_DATA]}/$NAME
+
+docker rm -f -v $NAME
+
+docker run -d \
+  --restart="unless-stopped" \
+  --name="$NAME" \
+  -v ${secrets[DOCKER_DATA]}/$NAME/config/traefik.toml:/etc/traefik/traefik.toml \
+  -v ${secrets[DOCKER_DATA]}/$NAME/config/dynamic:/etc/traefik/dynamic \
+  -v ${secrets[DOCKER_DATA]}/$NAME/config/acme.json:/etc/traefik/acme.json \
+  -v ${secrets[DOCKER_DATA]}/$NAME/config/certs:/etc/traefik/certs \
+  -v /var/log/traefik2/traefik.log:/var/log/traefik/traefik.log \
+  -v /var/log/traefik2/access.log:/var/log/traefik/access.log \
+  -v /var/run/docker.sock:/var/run/docker.sock:ro \
+  -v /etc/timezone:/etc/timezone:ro \
+  -v /etc/localtime:/etc/localtime:ro \
+  --network ${secrets[TRAEFIK_NET]} \
+  -p 80:80 \
+  -p 443:443 \
+  -p 9997:9997 \
+  traefik:latest 
+

@@ -1,0 +1,50 @@
+#!/bin/bash
+
+# ==================================================================================================
+
+## Update GitHub with any changes to Docker scripts (timeout to default No after Xs).
+#read -r -n 10 -t 5 -p "`echo -e $'\e[0;35m'`Do you wish to update git repo for docker run scripts? [y/N] `echo -e $'\n\e[1;35m'`(Script will continue without updating repo if no response in 5s)`echo -e $'\e[0m'`" response
+#response=${response:-No}    # Default response = No
+#if [[ "$response" =~ ^([yY][eE][sS]|[yY])+$ ]]; then
+#    /home/ryan/scripts/docker/_update_git.sh
+#fi
+#echo
+
+# ==================================================================================================
+
+# Get sensitive info from .conf file
+CONF_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+typeset -A secrets    # Define array to hold variables 
+while read line; do
+  if echo $line | grep -F = &>/dev/null; then
+    varname=$(echo "$line" | cut -d '=' -f 1); secrets[$varname]=$(echo "$line" | cut -d '=' -f 2-)
+  fi
+done < $CONF_DIR/_secrets.conf
+# echo ${secrets[FQDN]}; 
+# echo ${secrets[TRAEFIK_NET]}; echo ${secrets[DOCKER_DATA]};
+
+# ==================================================================================================
+
+NAME="portainer-vm"
+URL="$NAME.${secrets[FQDN]}"
+
+docker rm -f -v $NAME
+
+docker run -d \
+  --restart="unless-stopped" \
+  --name="$NAME" \
+  -p 9000:9000 \
+  -e TZ="Europe/London" \
+  -v ${secrets[DOCKER_DATA]}/$NAME/data:/data \
+  -v "/var/run/docker.sock:/var/run/docker.sock:ro" \
+  `# ---------------------- Traefik Proxy Section ----------------------` \
+  --network ${secrets[TRAEFIK_NET]} \
+  -l 'traefik.enable=true' \
+  -l "traefik.http.routers.$NAME.entrypoints=websecure" \
+  -l "traefik.http.routers.$NAME.rule=Host(\`$URL\`)" \
+  -l "traefik.http.services.$NAME.loadbalancer.server.port=9000" \
+  `#-l "traefik.http.routers.$NAME.middlewares=defaultauth@file"` \
+  `#-l "traefik.http.routers.$NAME.tls.certresolver=leresolver"` \
+  `# -------------------------------------------------------------------` \
+  portainer/portainer
+
