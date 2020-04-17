@@ -14,6 +14,9 @@
 !traefik.toml_20190626
 #----------
 !_traefik_version2
+!_traefik_config
+!certs
+!dynamic
 #----------
 !docker_management
 !pihole

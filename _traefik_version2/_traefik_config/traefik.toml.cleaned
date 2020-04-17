@@ -1,0 +1,174 @@
+#===================================================================================================
+# PROXY TO EXTERNAL SERVICES
+  # 
+  # 
+  # - In v1 we were able to easily create frontends/backends pointing to external services, services 
+  #   not running in docker, or the IP:PORT of docker services which we couldn't correctly 
+  #   configure with labels. e.g. webmin, pihole, unms, grafana, erx
+  #   With v2 we need to set up a dynamic toml file containing a router and service for each of
+  #   these - see external_services.toml
+#===================================================================================================
+
+#===================================================================================================
+# DATA COLLECTION
+  # https://docs.traefik.io/contributing/data-collection/
+#===================================================================================================
+[global]
+  # Send anonymous usage data
+  sendAnonymousUsage = true
+
+#===================================================================================================
+# LOGGING
+  # https://docs.traefik.io/observability/logs/
+  # - Logging levels are DEBUG, PANIC, FATAL, ERROR, WARN, and INFO. 
+#===================================================================================================
+[log]
+  level = "DEBUG"
+  filePath = "/var/log/traefik/traefik.log"
+   
+[accessLog]
+  bufferingSize = 0
+  filePath = "/var/log/traefik/access.log"
+  [accessLog.filters]
+    statusCodes = ["200", "300-302", "400-499"]
+    minDuration = "0s"
+
+
+
+#===================================================================================================
+# ENTRYPOINTS
+  # https://docs.traefik.io/routing/entrypoints/
+  # - Traefik entrypoint is created by default when API enabled. By manually defining it we can 
+  #   specify the port we want. Default port is 8080
+  #   Access to dashboard via URL will still occur over websecure entrypoint though per conifg in
+  #   dynamic file api.toml
+  # - We can also define an entrypoint for metrics for prometheus ingest, see metrics section 
+  #   further down. This simply changes the port used to connect from prometheus.
+#===================================================================================================
+[entryPoints]
+  [entryPoints.web]
+    address = ":80"
+    [entryPoints.web.http.redirections.entryPoint]
+      to = "websecure"
+      scheme = "https"
+
+
+  [entryPoints.websecure]
+    address = ":443"
+    
+    [entryPoints.websecure.http.tls]
+      certResolver = "leresolver"
+    #[entryPoints.websecure.http]
+      #middlewares = "defaultauth@file"
+
+  [entryPoints.traefik]
+    address = ":9997"
+
+  [entryPoints.metrics]
+    address = ":9996"
+
+
+
+#===================================================================================================
+# PROVIDER - DYNAMIC CONFIGURATION(S)
+  # https://docs.traefik.io/providers/file/
+  # https://docs.traefik.io/reference/dynamic-configuration/file/
+  # - The file provider lets you define the dynamic configuration in a TOML or YAML file.
+  # - The file provider can be a good location for common elements you'd like to re-use from other 
+  #   providers; e.g. declaring whitelist middlewares, basic authentication, ...
+  # - Filename and directory providers are mutually exclusive. Recommended to use directory.
+#===================================================================================================
+[providers.file]
+  directory = "/etc/traefik/dynamic"
+  watch = true
+  #filename = "/path/to/config/dynamic_conf.toml"
+
+
+
+#===================================================================================================
+# PING
+  # https://docs.traefik.io/operations/ping/
+  # Access <traefik_url>/ping to get healthcheck
+  # The entryPoint where the /ping is active can be customized with the entryPoint option
+  # default value is traefik (port 8080).
+#===================================================================================================
+[ping]
+
+
+
+#===================================================================================================
+# API
+  # https://docs.traefik.io/operations/dashboard/
+  # https://docs.traefik.io/operations/api/
+  # - API default entrypoint is called traefik and is autocreated using port 8080 if not defined.
+  # - API router is defined in dynamic toml file api.toml
+  # - API & debug data available on endpoints as defined here:
+  #       https://docs.traefik.io/operations/api/#endpoints
+  # - 'insecure = true' allows access to dashboard on entryPoint traefik port without 
+  #   username/password. Removing it disables dash access directly on the traefik port but you 
+  #   can continue to access dash through URL with user/pass
+#===================================================================================================
+[api]
+  insecure = true
+  debug = true
+  dashboard = true
+
+
+
+#===================================================================================================
+# PROVIDER - DOCKER
+  # https://docs.traefik.io/routing/providers/docker
+  # https://docs.traefik.io/reference/dynamic-configuration/docker/
+  # - exposedByDefault = false - doesn't apply to traefik container itself
+#===================================================================================================
+[providers.docker]
+  exposedByDefault = false
+  network = "traefik2"
+
+
+
+#===================================================================================================
+# ACME - LETS ENCRYPT
+  # https://docs.traefik.io/https/acme/
+  # - Note acme.json must have 600 permissions 
+  # - Uncomment caServer to use LE's test staging server
+  # - If using tlsChallenge make sure port 443 is forwarded through router to traefik's IP
+  #   tlsChallenge i traefik's preferred method and requires only one forwarded port.
+  # - If using httpChallenge make sure port 80 is forwarded through router to traefik's IP
+#===================================================================================================
+[certificatesResolvers.leresolver.acme]
+  email = "<your@email>"
+  storage = "/etc/traefik/acme.json"
+  caServer = "https://acme-staging-v02.api.letsencrypt.org/directory"
+  [certificatesResolvers.leresolver.acme.tlsChallenge]
+  #[certificatesResolvers.leresolver.acme.httpChallenge]
+  #  entryPoint = "web"
+
+
+
+#===================================================================================================
+# METRICS
+  # https://docs.traefik.io/observability/metrics/prometheus/
+  # https://docs.traefik.io/observability/metrics/influxdb/
+#===================================================================================================
+[metrics]
+  [metrics.prometheus]
+    entryPoint = ["metrics"]
+    # Buckets for latency metrics. (Optional, Default="0.100000, 0.300000, 1.200000, 5.000000")
+    buckets = [0.1,0.3,1.2,5.0]
+
+  #[metrics.influxDB]
+    # InfluxDB's address. (Required) [Default: "localhost:8089"]
+    #address = "localhost:8089"
+    # InfluxDB push interval (Optional) [Default: "10s"]
+    #pushinterval = "10s"
+    # InfluxDB's address protocol (udp or http) (Required) [Default: "udp"]
+    #protocol = "udp"
+    # InfluxDB database used when protocol is http (Optional) [Default: ""]
+    #database = ""
+    # InfluxDB retention policy used when protocol is http (Optional) [Default: ""]
+    #retentionpolicy = ""
+    # InfluxDB username (only with http).
+    #username = "john"
+    # InfluxDB password (only with http).
+    #password = "secret"

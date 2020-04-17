@@ -1,0 +1,41 @@
+#===================================================================================================
+# PROXY TO EXTERNAL SERVICES
+  # 
+  # 
+  # - In v1 we were able to easily create frontends/backends pointing to external services, services 
+  #   not running in docker, or the IP:PORT of docker services which we couldn't correctly 
+  #   configure with labels. e.g. webmin, pihole, unms, grafana, erx
+  #   With v2 we have this dynamic toml file containing a router and service for each of these.
+  # - We can also make use of middlewares for changing host paths, setting user/pass, ...
+  # - By default, passHostHeader is true: https://docs.traefik.io/routing/services/#pass-host-header
+#===================================================================================================
+
+[http.routers]
+  [http.routers.webmin]
+    entryPoints = ["websecure"]
+    rule = 'Host(`webmin-vm.<your domain>`)'
+    middleware = ["webmin"]
+    service = "webmin"
+
+  [http.routers.pihole]
+    entryPoints = ["websecure"]
+    rule = 'Host(`pihole-vm.<your domain>`)'
+    service = "pihole"
+    middlewares = ["defaultauth"]
+
+[http.services]
+  [http.services.webmin.loadBalancer]
+    [[http.services.webmin.loadBalancer.servers]]
+      url = "https://[<IP>:<PORT> or <URL>]/"
+
+  [http.services.pihole.loadBalancer]
+    [[http.services.pihole.loadBalancer.servers]]
+      url = "http://[<IP>:<PORT> or <URL>]/"
+
+
+[http.middlewares]
+  [http.middlewares.webmin]
+    [http.middlewares.webmin.redirectRegex]
+      regex = "https://webmin-vm.<your domain>/(.*)"
+      replacement = "https://webmin-vm.<your domain>:10000/${1}"
+      permanent = true
