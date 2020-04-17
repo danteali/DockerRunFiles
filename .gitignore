@@ -10,11 +10,10 @@
 !*.stop
 !*.sh
 !*.cleaned
+!*.readme
 !traefik.toml_20190626
 #----------
 !_traefik_version2
-!_map_this_vol_to_t2_container
-!place_wildcard_certs_here
 #----------
 !docker_management
 !pihole
