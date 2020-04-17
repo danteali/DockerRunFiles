@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # This runs at server startup (via crontab) to allow communication between the server (192.168.0.10)
-# and any docker containers using the macvlan between 192.168.0.224-239
+# and any docker containers using the macvlan between 192.168.0.224-231
 
 # Delete old macvlan just in case it is still there 
 sudo ip link delete lan_net-shim
@@ -15,7 +15,7 @@ done
 
 # Configure macvlan
 sudo ip link add lan_net-shim link enp4s0 type macvlan  mode bridge
-sudo ip addr add <server_IP>/32 dev lan_net-shim
+sudo ip addr add 192.168.0.10/32 dev lan_net-shim
 sudo ip link set lan_net-shim up
-sudo ip route add <Container IP Range/CIDR Notation> dev lan_net-shim
+sudo ip route add 192.168.0.224/29 dev lan_net-shim
 

@@ -9,6 +9,7 @@
 !*.start
 !*.stop
 !*.sh
+!*.cleaned
 !traefik.toml_20190626
 #----------
 !macvlan
@@ -50,6 +51,7 @@ unused
 *.ipcheck
 #----------
 macvlan_docker.sh
+vm_macvlan_docker.sh
 #----------
 crontab_monitor.alerts
 crontab_monitor.history
