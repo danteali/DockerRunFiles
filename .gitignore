@@ -57,5 +57,11 @@ crontab_monitor.warn
 crontab_monitor.watchlist
 #----------
 tmp_exporter.sh
+#----------
+traefik.toml
+api.toml
+defaultauth.toml
+external_services.toml
+tls.toml
 #-----------------------------
 
