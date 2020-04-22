@@ -38,7 +38,17 @@ docker create \
   -l "traefik.port=80" \
   -l "traefik.frontend.passHostHeader=true" \
   `# -------------------------------------` \
-  onlyoffice/documentserver:latest
+  onlyoffice/documentserver:5.4.2.46
+
+
+# Sticking with v 5.4.2.46 since...
+# Only Office revoked the ability to edit docs for some reason.
+# Can use this instead: https://github.com/Zegorax/OnlyOffice-Unlimited
+# Also see here for more info: https://www.reddit.com/r/selfhosted/comments/fpurk6/stop_recommending_onlyoffice/
+# And OO issue here: https://github.com/ONLYOFFICE/DocumentServer/issues/805
+
+# Or move to Collabora
+
 
 # Add to traefik-proxy network so it can reach the other container - '--link' options above doesn't seem to work proerly if we try to add straight to traefik-proxy above.
 docker network connect bridge $NAME

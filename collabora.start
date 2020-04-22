@@ -51,4 +51,13 @@ docker run -d \
   collabora/code:latest
 
 
-
+# these vols/envvars/labels were noted in some guides. Works without them so far but noted for info:
+#    -v ${DOCKERDIR}/collabora:/config
+#    -v /Nextcloud:/data
+#    -v ${DOCKERDIR}/shared:/shared  
+#    -e "domain=nextcloud.${DOMAINNAME}"
+#    -e server_name=collabora.${DOMAINNAME}
+#    -l "traefik.frontend.rule=Host:collabora.${DOMAINNAME};PathPrefix:/"
+#    -l "traefik.frontend.headers.STSSeconds=63072000"
+#    -l "traefik.frontend.headers.browserXSSFilter=true"
+#    -l "traefik.frontend.headers.contentTypeNosniff=true"
