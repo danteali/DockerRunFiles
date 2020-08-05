@@ -70,7 +70,8 @@ docker create \
   --log-driver json-file \
   --log-opt max-size=20m \
   --log-opt max-file=10 \
-  homeassistant/home-assistant:0.107.7
+  homeassistant/home-assistant
+  #homeassistant/home-assistant:0.107.7
   #homeassistant/home-assistant:0.102.3
 
 
