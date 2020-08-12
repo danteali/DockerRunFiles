@@ -16,4 +16,5 @@ docker run -d \
   --log-driver json-file \
   --log-opt max-size=20m \
   --log-opt max-file=10 \
-  koenkk/zigbee2mqtt:1.4.0
+  koenkk/zigbee2mqtt:1.14.2
+  #koenkk/zigbee2mqtt:1.4.0
