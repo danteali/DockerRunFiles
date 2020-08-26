@@ -36,6 +36,7 @@ docker run -d \
   -e "REGION=${secrets[PIA_REGION]}" \
   -e "USERNAME=${secrets[PIA_USERNAME]}" \
   -e "PASSWORD=${secrets[PIA_PASSWORD]}" \
+  -e "FIREWALL=off" \
   `# ------- Traefik Proxy Section -------` \
   --network traefik-proxy \
   -l "traefik.enable=true" \
@@ -54,7 +55,31 @@ docker run -d \
   `#-l "traefik.ubuntu.port=80"` \
   `#-l "traefik.ubuntu.frontend.rule=Host:ubuntu.$FQDN"` \
   `# -------------------------------------` \
-  colinhebert/pia-openvpn
+  act28/pia-openvpn
+  
+  # Other containers to use if one breaks:
+    # Working since forever: 
+        #colinhebert/pia-openvpn
+        # - Variable is USERNAME
+        # - Broke Aug 2020: Image not updated in 4 years so think it's using old ovpn files and thowing errors.
+    # Based on colinhebert but wioth updated config from PIA - drop-in replacement:
+        # act28/pia-openvpn
+    # Confirmed connecting to PIA but trouble acessing torrent containers:
+        # qmcgaw/private-internet-access
+        # - Varibale is USER
+        # - Environment variable "REGION" can only be one of: AU Melbourne, AU Perth, AU Sydney, 
+        #   Austria, Belgium, CA Montreal, CA Toronto, CA Vancouver, Czech Republic, DE Berlin, 
+        #   DE Frankfurt, Denmark, Finlan, France, Hungary, India, Ireland, Israel, Italy, Japan,
+        #   Luxembourg, Mexico, Netherlands, New Zealand, Norway, Poland, Romania, Singapore, Spain,
+        #   Sweden, Switzerland, UAE, UK London, UK Manchester, UK Southampton, US Atlanta,
+        #   US California, US Chicago, US Dallas, US Denver, US East, US Florida, US Houston,
+        #   US Las Vegas, US New York City, US Seattle, US Silicon Valley, US Washington DC, US West
+        # - Extra options to use:
+        #     `#-e "FIREWALL=off"` \
+        #     -e "EXTRA_SUBNETS=192.168.0.0/24,192.168.10.0/24,192.168.20.0/24,192.168.30.0/24,172.17.0.0/24,172.18.0.0/24,172.19.0.0/24" \
+    # Haven't confirmed working but all variables match so should be a drop in replacement:
+        # itsdaspecialk/pia-openvpn
+
 
 echo
 
@@ -69,7 +94,7 @@ if [[ $1 != "-nochecks" ]]; then
     PIAIP=`cat $IPCHECK | grep -e ip | tr -d '\n\r ,"ip:'`
     PIACO=`cat $IPCHECK | grep -e country | tr -d '", ' | sed 's/country://'`
 
-    if [[ $PIACO == *"RO"* ]] || [[ $PIACO == *"TR"* ]] || [[ $PIACO == *"BR"* ]]; then
+    if [[ $PIACO == *"RO"* ]] || [[ $PIACO == *"TR"* ]] || [[ $PIACO == *"BR"* ]] || [[ $PIACO == *"NO"* ]]; then
       VPNCONNECTED=1
       echo ${green}
       echo "VPN Connected on IP: $PIAIP"

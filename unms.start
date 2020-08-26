@@ -36,8 +36,8 @@ docker run -d \
   --log-driver json-file \
   --log-opt max-size=20m \
   --log-opt max-file=10 \
-  oznu/unms:0.13.1
-  #oznu/unms:latest
+  oznu/unms:latest
+  #oznu/unms:0.13.1
   #oznu/unms:0.13.0r3
   #oznu/unms:0.12.0-beta.7
   #oznu/unms:0.11.3
