@@ -30,6 +30,7 @@ docker create \
   --restart="unless-stopped" \
   -l org.label-schema.group="monitoring" \
   `#-p 1880:1880` \
+  -e UID=1000 -e GID=1000 \
   --network lan_net \
   --ip=${secrets[IP]} \
   -v /storage/Docker/node-red/data:/data \
