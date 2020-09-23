@@ -12,6 +12,17 @@ if [[ "$response" =~ ^([yY][eE][sS]|[yY])+$ ]]; then
 fi
 echo
 
+# Get sensitive info from .conf file
+CONF_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+typeset -A secrets    # Define array to hold variables 
+while read line; do
+  if echo $line | grep -F = &>/dev/null; then
+    varname=$(echo "$line" | cut -d '=' -f 1); secrets[$varname]=$(echo "$line" | cut -d '=' -f 2-)
+  fi
+done < $CONF_DIR/unms.conf
+#echo ${secrets[FQDN]}
+
+FQDN="${secrets[FQDN]}"
 NAME=unms
 
 docker rm -f -v $NAME
@@ -25,6 +36,8 @@ docker run -d \
   -l com.centurylinklabs.watchtower.enable='false' \
   -p 8083:80 \
   -p 8084:443 \
+  --network lan_net \
+  --ip=${secrets[IP]} \
   `#-p 2055:2055/udp` \
   -e PUBLIC_HTTPS_PORT=8084 \
   -e PUBLIC_WS_PORT=8084 \
@@ -36,9 +49,22 @@ docker run -d \
   --log-driver json-file \
   --log-opt max-size=20m \
   --log-opt max-file=10 \
+  `# ------- Traefik Proxy Section -------` \
+  `#--network traefik-proxy` \
+  -l "traefik.enable=true" \
+  -l "traefik.port=8084" \
+  -l "traefik.frontend.rule=Host:$NAME.$FQDN" \
+  `# -------------------------------------` \
+  -l com.centurylinklabs.watchtower.enable='false' \
   oznu/unms:latest
   #oznu/unms:0.13.1
   #oznu/unms:0.13.0r3
   #oznu/unms:0.12.0-beta.7
   #oznu/unms:0.11.3
 
+# Add to bridge & traefik-proxy network so it can reach the other container
+docker network connect bridge $NAME
+docker network connect traefik-proxy $NAME
+
+# Start container
+docker start $NAME
