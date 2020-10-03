@@ -51,7 +51,7 @@ docker run -d \
   --log-opt max-file=10 \
   `# ------- Traefik Proxy Section -------` \
   `#--network traefik-proxy` \
-  -l "traefik.enable=true" \
+  -l "traefik.enable=false" \
   -l "traefik.port=8084" \
   -l "traefik.frontend.rule=Host:$NAME.$FQDN" \
   `# -------------------------------------` \

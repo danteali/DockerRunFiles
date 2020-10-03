@@ -32,7 +32,7 @@ docker rm -f -v $NAME
 docker create \
   --name $NAME \
   --restart="unless-stopped" \
-    -e PUID=1000 \
+  -e PUID=1000 \
   -e PGID=1000 \
   -e MEM_LIMIT=1024M `#optional` \
   -p 3478:3478/udp \
@@ -50,7 +50,7 @@ docker create \
   -e TZ='Europe/London' \
   `# ------- Traefik Proxy Section -------` \
   `#--network traefik-proxy` \
-  -l "traefik.enable=true" \
+  -l "traefik.enable=false" \
   -l "traefik.unifigui.frontend.rule=Host:unifi.$FQDN" \
   -l "traefik.unifigui.port=8443" \
   -l "traefik.unifigui.protocol=https" \

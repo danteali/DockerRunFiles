@@ -41,7 +41,9 @@ docker run -d \
   -v /storage/Docker/pihole/config/etc/hosts:/etc/hosts \
   -v /storage/Docker/pihole/config/etc/dnsmasq.d/:/etc/dnsmasq.d/ \
   -v /storage/Docker/pihole/config/etc/pihole/:/etc/pihole/ \
+  `# From 4.2.2 --cap-add NET_ADMIN no longer required unless using DHCP, leaving in case roll back to 4.1.1 needed` \
   --cap-add=NET_ADMIN \
+  `# From 4.2.2 ServerIP no longer required unless customising lighttpd, leaving in case roll back to 4.1.1 needed` \
   -e ServerIP=${secrets[SERVERIP]} \
   -e PROXY_LOCATION=pihole \
   -e VIRTUAL_HOST=pihole \
@@ -67,8 +69,8 @@ docker run -d \
   `# -------------------------------------` \
   `# Dont update image with watchtower` \
   -l com.centurylinklabs.watchtower.enable=false \
-  pihole/pihole:4.1.1
-  #pihole/pihole:latest
+  pihole/pihole:latest
+  #pihole/pihole:4.1.1 # Confirmed working. Working config backed up 02/10/20
 
 #printf 'Starting up pihole container '
 #for i in $(seq 1 20); do

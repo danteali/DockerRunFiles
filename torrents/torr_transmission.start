@@ -15,7 +15,9 @@ if [[ $1 == "-local" ]]; then
     -v /storage/scratchpad/downloads:/downloads \
     -v /storage/Docker/torr_transmission/watchdir:/watch \
     -e PGID=1000 -e PUID=1000 \
-    -p 9091:9091 -p 51413:51413 -p 51413:51413/udp \
+    -p 9091:9091 \
+    -p 51413:51413 \
+    -p 51413:51413/udp \
     linuxserver/transmission
 
     # Start monitor for Grafana data

@@ -27,7 +27,8 @@ docker rm -f -v $NAME
 docker create \
   --restart="unless-stopped" \
   --name $NAME \
-  -p 61208-61209:61208-61209 \
+  -p 61208:61208 \
+  -p 61209:61209 \
   -e GLANCES_OPT="-w" \
   `#-e GLANCES_OPT="--quiet --export influxdb"` \
   -v /var/run/docker.sock:/var/run/docker.sock:ro \
