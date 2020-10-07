@@ -69,7 +69,9 @@ docker run -d \
   `# -------------------------------------` \
   `# Dont update image with watchtower` \
   -l com.centurylinklabs.watchtower.enable=false \
-  pihole/pihole:latest
+  pihole/pihole:4.1.1
+  #pihole/pihole:5.1.2 # Worked fine but error writing to readonly DB for any changes to white/blacklists and groups - reverted to 4.1.1
+  #pihole/pihole:latest
   #pihole/pihole:4.1.1 # Confirmed working. Working config backed up 02/10/20
 
 #printf 'Starting up pihole container '
