@@ -60,13 +60,20 @@ docker run -d \
   # Other containers to use if one breaks:
     # Working since forever: 
         #colinhebert/pia-openvpn
-        # - Variable is USERNAME
+        # - User Variable is: USERNAME
         # - Broke Aug 2020: Image not updated in 4 years so think it's using old ovpn files and thowing errors.
-    # Based on colinhebert but wioth updated config from PIA - drop-in replacement:
+    
+    # Based on colinhebert but with updated config from PIA - drop-in replacement:
         # act28/pia-openvpn
+        # Use as proxy - local LAN devices can connect to container and use VPN for browsing
+            # Set: -e "LOCAL_NETWORK=192.168.0.0/24" 
+            # And: -p 8118:8118 
+            # On LAN devices set proxy to 192.168.0.10:8118 or use "Proxy SwitchyOmega" extension to
+            # allow browsing via VPN
+
     # Confirmed connecting to PIA but trouble acessing torrent containers:
         # qmcgaw/private-internet-access
-        # - Varibale is USER
+        # - User Variable is: USER
         # - Environment variable "REGION" can only be one of: AU Melbourne, AU Perth, AU Sydney, 
         #   Austria, Belgium, CA Montreal, CA Toronto, CA Vancouver, Czech Republic, DE Berlin, 
         #   DE Frankfurt, Denmark, Finlan, France, Hungary, India, Ireland, Israel, Italy, Japan,
@@ -77,8 +84,27 @@ docker run -d \
         # - Extra options to use:
         #     `#-e "FIREWALL=off"` \
         #     -e "EXTRA_SUBNETS=192.168.0.0/24,192.168.10.0/24,192.168.20.0/24,192.168.30.0/24,172.17.0.0/24,172.18.0.0/24,172.19.0.0/24" \
-    # Haven't confirmed working but all variables match so should be a drop in replacement:
-        # itsdaspecialk/pia-openvpn
+    
+    
+    # https://hub.docker.com/r/chuckremes/openvpn-client
+        # Image: chuckremes/openvpn-client
+        # Variables:
+          # -e "OPENVPN_PROVIDER=PIA" \
+          # -e "OPENVPN_CONFIG=Netherlands" \
+          # -e "OPENVPN_USERNAME=user" \
+          # -e "OPENVPN_PASSWORD=pass" \
+
+
+    # Could just try an OVPN client and use PIA .ovpn config files e.g.
+        # Get up to date PIA ovpn files with: 
+            # wget https://www.privateinternetaccess.com/openvpn/openvpn.zip -O /storage/Docker/ekristen-openvpn-client/openvpn.zip
+            # unzip /storage/Docker/ekristen-openvpn-client/openvpn.zip -d /storage/Docker/ekristen-openvpn-client/config/
+        # Image: ekristen/openvpn-client
+        # Takes normal openvpn client flags after image name e.g. for username/password
+        # Copy auth-user-pass.txt into config folder
+        # Variables:
+          # -v /storage/Docker/ekristen-openvpn-client/config:/vpn \
+          # ekristen/openvpn-client --config /vpn/Romania.conf --auth-user-pass /vpn/auth-user-pass.txt --auth-nocache
 
 
 echo
@@ -91,10 +117,10 @@ if [[ $1 != "-nochecks" ]]; then
   while [[ $VPNCONNECTED == 0 ]]
   do
     docker run --rm --net=container:torr_pia appropriate/curl curl -s ipinfo.io > $IPCHECK
-    PIAIP=`cat $IPCHECK | grep -e ip | tr -d '\n\r ,"ip:'`
+    PIAIP=`cat $IPCHECK | grep -e \"ip | tr -d '\n\r ,"ip:'`
     PIACO=`cat $IPCHECK | grep -e country | tr -d '", ' | sed 's/country://'`
 
-    if [[ $PIACO == *"RO"* ]] || [[ $PIACO == *"TR"* ]] || [[ $PIACO == *"BR"* ]] || [[ $PIACO == *"NO"* ]]; then
+    if [[ $PIACO == *"ES"* ]] || [[ $PIACO == *"RO"* ]] || [[ $PIACO == *"TR"* ]] || [[ $PIACO == *"BR"* ]] || [[ $PIACO == *"NO"* ]]; then
       VPNCONNECTED=1
       echo ${green}
       echo "VPN Connected on IP: $PIAIP"

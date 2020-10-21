@@ -39,10 +39,10 @@ echo ${reset}
 while [[ $VPNCONNECTED == 0 ]]
 do
   docker run --rm --net=container:torr_pia appropriate/curl curl -s ipinfo.io > $IPCHECK
-  PIAIP=`cat $IPCHECK | grep -e ip | tr -d '\n\r ,"ip:'`
+  PIAIP=`cat $IPCHECK | grep -e \"ip | tr -d '\n\r ,"ip:'`
   PIACO=`cat $IPCHECK | grep -e country | tr -d '", ' | sed 's/country://'`
 
-  if [[ $PIACO == *"RO"* ]] || [[ $PIACO == *"TR"* ]] || [[ $PIACO == *"BR"* ]]; then
+  if [[ $PIACO == *"ES"* ]] || [[ $PIACO == *"RO"* ]] || [[ $PIACO == *"TR"* ]] || [[ $PIACO == *"BR"* ]] || [[ $PIACO == *"NO"* ]]; then
     VPNCONNECTED=1
     echo ${green}
     echo "VPN Connected on IP: $PIAIP"

@@ -54,9 +54,9 @@ if [[ $1 != "-nochecks" ]]; then
   NAME=torr_radarr
   IPCHECK="/home/ryan/scripts/docker/torrents/torr.ipcheck"
   docker run --rm --net=container:$NAME appropriate/curl curl -s ipinfo.io > $IPCHECK
-  PIAIP=$(cat $IPCHECK | grep -e ip | tr -d '\n\r ,"ip:')
+  PIAIP=$(cat $IPCHECK | grep -e \"ip | tr -d '\n\r ,"ip:')
   PIACO=$(cat $IPCHECK | grep -e country | tr -d '", ' | sed 's/country://')
-  ISPIP=$(curl -s ipinfo.io | grep -e ip | tr -d '\n\r ,"ip:')
+  ISPIP=$(curl -s ipinfo.io | grep -e \"ip | tr -d '\n\r ,"ip:')
 
   echo; echo "Checking IP of container does not equal ISP IP..."
   printf "%-20s %15s\n" "ISP IP..." "$ISPIP"

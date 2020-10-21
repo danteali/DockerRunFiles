@@ -8,7 +8,7 @@ txtund=`tput sgr 0 1`          # Underline
 reset=`tput sgr0`
 
 SOURCE="/home/ryan/scripts/docker/torrents"
-ISPIP=`curl -s ipinfo.io | grep -e ip | tr -d '\n\r ,"ip:'` 
+ISPIP=`curl -s ipinfo.io | grep -e \"ip | tr -d '\n\r ,"ip:'` 
 VPNCONNECTED=0
 
 echo ${red} && echo "================ ${txtund}Stopping running Sonarr & Radarr (& Jackett)${reset}${red} ==================="

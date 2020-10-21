@@ -17,7 +17,7 @@ echo ${reset}
 
 
 curl -s ipinfo.io > $SOURCE/isp_ip.tmp
-ISPIP=`cat $SOURCE/isp_ip.tmp | grep -e ip | tr -d '\n\r ,"ip:'`
+ISPIP=`cat $SOURCE/isp_ip.tmp | grep -e \"ip | tr -d '\n\r ,"ip:'`
 ISPCO=`cat $SOURCE/isp_ip.tmp | grep -e country | tr -d '", ' | sed 's/country://'`
 rm $SOURCE/isp_ip.tmp
 echo "ISP IP Address: ${green}$ISPIP${reset}"
@@ -26,7 +26,7 @@ echo "" && echo "--------------------------------------" && echo
 
 if [ ! -z "$(docker ps | grep torr_pia | grep Up)" ]; then
   docker run --rm --net=container:torr_pia appropriate/curl curl -s ipinfo.io > $SOURCE/pia_ip.tmp
-  PIAIP=`cat $SOURCE/pia_ip.tmp | grep -e ip | tr -d '\n\r ,"ip:'`
+  PIAIP=`cat $SOURCE/pia_ip.tmp | grep -e \"ip | tr -d '\n\r ,"ip:'`
   PIACO=`cat $SOURCE/pia_ip.tmp | grep -e country | tr -d '", ' | sed 's/country://'`
   rm $SOURCE/pia_ip.tmp
   echo "PIA IP Address: ${green}$PIAIP${reset}"
@@ -39,7 +39,7 @@ fi
 
 if [ ! -z "$(docker ps | grep torr_transmission | grep Up)" ]; then
   docker run --rm --net=container:torr_transmission appropriate/curl curl -s ipinfo.io > $SOURCE/trans_ip.tmp
-  TRANSIP=`cat $SOURCE/trans_ip.tmp | grep -e ip | tr -d '\n\r ,"ip:'`
+  TRANSIP=`cat $SOURCE/trans_ip.tmp | grep -e \"ip | tr -d '\n\r ,"ip:'`
   TRANSCO=`cat $SOURCE/trans_ip.tmp | grep -e country | tr -d '", ' | sed 's/country://'`
   rm $SOURCE/trans_ip.tmp
   echo "Transmission IP Address: ${green}$TRANSIP${reset}"
@@ -52,7 +52,7 @@ fi
 
 if [ ! -z "$(docker ps | grep torr_sonarr | grep Up)" ]; then
   docker run --rm --net=container:torr_sonarr appropriate/curl curl -s ipinfo.io > $SOURCE/sonarr_ip.tmp
-  SONIP=`cat $SOURCE/sonarr_ip.tmp | grep -e ip | tr -d '\n\r ,"ip:'`
+  SONIP=`cat $SOURCE/sonarr_ip.tmp | grep -e \"ip | tr -d '\n\r ,"ip:'`
   SONCO=`cat $SOURCE/sonarr_ip.tmp | grep -e country | tr -d '", ' | sed 's/country://'`
   rm $SOURCE/sonarr_ip.tmp
   echo "Sonarr IP Address: ${green}$SONIP${reset}"
@@ -65,7 +65,7 @@ fi
 
 if [ ! -z "$(docker ps | grep torr_radarr | grep Up)" ]; then
   docker run --rm --net=container:torr_radarr appropriate/curl curl -s ipinfo.io > $SOURCE/radarr_ip.tmp
-  RADIP=`cat $SOURCE/radarr_ip.tmp | grep -e ip | tr -d '\n\r ,"ip:'`
+  RADIP=`cat $SOURCE/radarr_ip.tmp | grep -e \"ip | tr -d '\n\r ,"ip:'`
   RADCO=`cat $SOURCE/radarr_ip.tmp | grep -e country | tr -d '", ' | sed 's/country://'`
   rm $SOURCE/radarr_ip.tmp
   echo "Radarr IP Address: ${green}$RADIP${reset}"
@@ -78,7 +78,7 @@ fi
 
 if [ ! -z "$(docker ps | grep torr_jackett | grep Up)" ]; then
   docker run --rm --net=container:torr_jackett appropriate/curl curl -s ipinfo.io > $SOURCE/jackett_ip.tmp
-  JACKIP=`cat $SOURCE/jackett_ip.tmp | grep -e ip | tr -d '\n\r ,"ip:'`
+  JACKIP=`cat $SOURCE/jackett_ip.tmp | grep -e \"ip | tr -d '\n\r ,"ip:'`
   JACKCO=`cat $SOURCE/jackett_ip.tmp | grep -e country | tr -d '", ' | sed 's/country://'`
   rm $SOURCE/jackett_ip.tmp
   echo "Jackett IP Address: ${green}$JACKIP${reset}"

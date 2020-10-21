@@ -24,7 +24,7 @@ if [ ! -z "$(docker ps | grep torr_transmission | grep Up)" ]; then
 
   #Check transmission container IP address. If not 'GB' then okay to be running. Otherwise kill.
   docker run --rm --net=container:torr_transmission appropriate/curl curl -s ipinfo.io > $SOURCE/transmission_ip.tmp
-  IP=`cat $SOURCE/transmission_ip.tmp | grep -e ip | tr -d '\n\r ,"ip:'`
+  IP=`cat $SOURCE/transmission_ip.tmp | grep -e \"ip | tr -d '\n\r ,"ip:'`
   CO=`cat $SOURCE/transmission_ip.tmp | grep -e country | tr -d '", ' | sed 's/country://'`
   echo "${blue}Transmission IP Address: $IP"
   echo "Transmission Country: $CO ${reset}" && echo
