@@ -23,17 +23,17 @@ echo ${green} && echo "================== ${txtund}Starting Sonarr & Radarr (& J
 echo ${blue}
 echo "--------------------------- sonarr -----------------------------"
 echo ${yellow}
-$SOURCE/torr_sonarr.start -nochecks
+$SOURCE/torr_sonarr.start --nochecks
 echo ${reset}
 
 echo ${blue}
 echo "-------------------------- radarr ------------------------------"
 echo ${yellow}
-$SOURCE/torr_radarr.start -nochecks
+$SOURCE/torr_radarr.start --nochecks
 echo ${reset}
 
 echo ${blue}
 echo "-------------------------- jackett -----------------------------"
 echo ${yellow}
-$SOURCE/torr_jackett.start -nochecks
+$SOURCE/torr_jackett.start --nochecks
 echo ${reset}

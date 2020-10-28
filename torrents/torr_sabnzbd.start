@@ -3,7 +3,7 @@
 docker rm -f -v torr_sabnzbd > /dev/null 2>&1
 
 
-if [[ $1 == "-local" ]]; then
+if [[ $1 == "--local" ]]; then
   echo "Using localhost networking"
 
   docker run -d \
@@ -19,13 +19,13 @@ if [[ $1 == "-local" ]]; then
 
 else
 
-  if [[ $1 != "-nochecks" ]]; then
+  if [[ $1 != "--nochecks" ]]; then
     #Check PIA running before starting
     if [ ! -z "$(docker ps | grep torr_pia | grep Up)" ]; then
       echo "PIA running - starting SABnzbd"
       #echo "$(docker ps | grep pia | grep Up)"
     else
-      echo "PIA not running - not starting SABnzbd. Run using localhost networking with: -local"
+      echo "PIA not running - not starting SABnzbd. Run using localhost networking with: --local"
       echo "Quitting"
       exit 1
     fi
@@ -43,7 +43,7 @@ else
 
 fi
 
-if [[ $1 != "-nochecks" ]]; then
+if [[ $1 != "--nochecks" ]]; then
   # Check IPs to confirm running in VPN
   red=$(tput setaf 1)
   green=`tput setaf 2`

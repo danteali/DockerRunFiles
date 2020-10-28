@@ -8,7 +8,7 @@
 docker rm -f -v torr_sonarr > /dev/null 2>&1
 
 
-if [[ $1 == "-local" ]]; then
+if [[ $1 == "--local" ]]; then
   echo "Using localhost networking"
   docker run -d \
     --name torr_sonarr \
@@ -24,13 +24,13 @@ if [[ $1 == "-local" ]]; then
     #linuxserver/sonarr:2.0.0.5322-ls28 
 else
 
-  if [[ $1 != "-nochecks" ]]; then
+  if [[ $1 != "--nochecks" ]]; then
     #Check PIA running before starting
     if [ ! -z "$(docker ps | grep torr_pia | grep Up)" ]; then
       echo "PIA running - starting Sonarr"
       #echo "$(docker ps | grep pia | grep Up)"
     else
-      echo "PIA not running - not starting Sonarr. Run using localhost networking with: -local"
+      echo "PIA not running - not starting Sonarr. Run using localhost networking with: --local"
       echo "Quitting"
       exit 1
     fi
@@ -50,7 +50,7 @@ else
     #linuxserver/sonarr:2.0.0.5322-ls28 
 fi
 
-if [[ $1 != "-nochecks" ]]; then
+if [[ $1 != "--nochecks" ]]; then
   # Check IPs to confirm running in VPN
   red=$(tput setaf 1)
   green=`tput setaf 2`

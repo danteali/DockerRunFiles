@@ -33,7 +33,7 @@ echo ${blue}
 echo "---------------------------- PIA -------------------------------"
 echo ${yellow}
 
-$SOURCE/torr_pia.start -nochecks
+$SOURCE/torr_pia.start --nochecks
 echo ${reset}
 
 while [[ $VPNCONNECTED == 0 ]]
@@ -68,43 +68,43 @@ done
 echo ${blue}
 echo "----------------------- transmission ---------------------------"
 echo ${yellow}
-$SOURCE/torr_transmission.start -nochecks
+$SOURCE/torr_transmission.start --nochecks
 echo ${reset}
 
 echo ${blue}
 echo "-------------------------- jackett -----------------------------"
 echo ${yellow}
-$SOURCE/torr_jackett.start -nochecks
+$SOURCE/torr_jackett.start --nochecks
 echo ${reset}
 
 echo ${blue}
 echo "--------------------------- sonarr -----------------------------"
 echo ${yellow}
-$SOURCE/torr_sonarr.start -nochecks
+$SOURCE/torr_sonarr.start --nochecks
 echo ${reset}
 
 echo ${blue}
 echo "-------------------------- radarr ------------------------------"
 echo ${yellow}
-$SOURCE/torr_radarr.start -nochecks
+$SOURCE/torr_radarr.start --nochecks
 echo ${reset}
 
 #echo ${blue}
 #echo "---------------------- LazyLibrarian ---------------------------"
 #echo ${yellow}
-#$SOURCE/torr_lazylibrarian.start -nochecks
+#$SOURCE/torr_lazylibrarian.start --nochecks
 #echo ${reset}
 
 #echo ${blue}
 #echo "------------------------ couchpotato ---------------------------"
 #echo ${yellow}
-#$SOURCE/torr_couchpotato.start -nochecks
+#$SOURCE/torr_couchpotato.start --nochecks
 #echo ${reset}
 
 #echo ${blue}
 #echo "------------------------- sabnzbd ------------------------------"
 #echo ${yellow}
-#$SOURCE/torr_sabnzbd.start -nochecks
+#$SOURCE/torr_sabnzbd.start --nochecks
 #echo ${reset}
 
 #echo ${blue}
