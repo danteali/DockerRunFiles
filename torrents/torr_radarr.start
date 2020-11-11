@@ -12,6 +12,7 @@ if [[ $1 == "--local" ]]; then
     -v /storage/Docker/torr_radarr:/config \
     -v /storage/scratchpad/downloads:/downloads \
     -v /storage/Media/Video/Movies:/movies \
+    -v /storage/Media/Video/Movies_4K:/movies_4k \
     -v /storage/Media/Video:/all_vids_ro:ro \
     -e PGID=1000 -e PUID=1000  \
     -e TZ="Europe/London" \
@@ -38,6 +39,7 @@ else
     -v /storage/Docker/torr_radarr:/config \
     -v /storage/scratchpad/downloads:/downloads \
     -v /storage/Media/Video/Movies:/movies \
+    -v /storage/Media/Video/Movies_4K:/movies_4k \
     -v /storage/Media/Video:/all_vids_ro:ro \
     -e PGID=1000 -e PUID=1000  \
     -e TZ="Europe/London" \

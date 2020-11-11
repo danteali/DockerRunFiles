@@ -30,21 +30,23 @@ docker create \
   --restart="unless-stopped" \
   -l org.label-schema.group="monitoring" \
   `#-p 1880:1880` \
-  -e UID=1000 -e GID=1000 \
+  `#-e UID=1000 -e GID=1000` \
   --network lan_net \
   --ip=${secrets[IP]} \
   -v /storage/Docker/node-red/data:/data \
   -v /storage/scratchpad/nodered:/files \
   `#-v /etc/localtime:/etc/localtime` \
   -e TZ="Europe/London" \
-  -l com.centurylinklabs.watchtower.enable='false' \
+  `#-l com.centurylinklabs.watchtower.enable='false'` \
   `# ------- Traefik Proxy Section -------` \
   -l "traefik.enable=true" \
   -l "traefik.port=1880" \
   -l "traefik.frontend.rule=Host:$NAME.$FQDN" \
   -l "traefik.frontend.auth.basic.users=${secrets[USERNAME]}:${secrets[PASSWORD]}" \
   `# -------------------------------------` \
-  nodered/node-red-docker
+  nodered/node-red
+  #nodered/node-red-docker
+  #nodered/node-red-docker:v8
 
 
 # Add to traefik-proxy network so it can reach the other container
