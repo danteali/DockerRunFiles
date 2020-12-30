@@ -11,28 +11,27 @@ done < $CONF_DIR/zigbee2mqtt.conf
 #echo ${secrets[FQDN]}; echo ${secrets[IP]}
 
 FQDN="${secrets[FQDN]}"
-NAME="zigbee2mqtt"
+NAME="zigbee2mqtt_test"
 
 docker rm -f -v $NAME
 
 docker create \
   --name=$NAME \
   --restart="unless-stopped" \
-  -p 11121:11121 \
+  -p 11122:11121 \
   `#--net=host` \
   -l org.label-schema.group="monitoring" \
-  -v /storage/Docker/zigbee2mqtt/data:/app/data \
-  -v /storage/Docker/zigbee2mqtt/data/zigbee-shepherd-converters:/app/node_modules/zigbee-shepherd-converters \
-  -v /storage/Docker/zigbee2mqtt/data/lib/extension/homeassistant.js:/app/lib/extension/homeassistant.js \
-  `#--device=/dev/ttyACM0` \
+  -v /storage/Docker/zigbee2mqtt_test/data:/app/data \
+  `#-v /storage/Docker/zigbee2mqtt_test/data/zigbee-shepherd-converters:/app/node_modules/zigbee-shepherd-converters` \
+  `#-v /storage/Docker/zigbee2mqtt_test/data/lib/extension/homeassistant.js:/app/lib/extension/homeassistant.js` \
   --device=/dev/ttyUSB0 \
   --log-driver json-file \
   --log-opt max-size=20m \
   --log-opt max-file=10 \
   `# ------- Traefik Proxy Section -------` \
   -l "traefik.enable=true" \
-  -l "traefik.port=11121" \
-  -l "traefik.frontend.rule=Host:zigbee2mqtt.$FQDN" \
+  -l "traefik.port=11122" \
+  -l "traefik.frontend.rule=Host:test_zigbee2mqtt.$FQDN" \
   `# -------------------------------------` \
   koenkk/zigbee2mqtt:latest-dev
   #koenkk/zigbee2mqtt:1.16.2
