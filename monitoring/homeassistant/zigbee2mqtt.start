@@ -34,10 +34,11 @@ docker create \
   -l "traefik.port=11121" \
   -l "traefik.frontend.rule=Host:zigbee2mqtt.$FQDN" \
   `# -------------------------------------` \
-  koenkk/zigbee2mqtt:latest-dev
+  koenkk/zigbee2mqtt:1.17.0
   #koenkk/zigbee2mqtt:1.16.2
   #koenkk/zigbee2mqtt:1.14.2
   #koenkk/zigbee2mqtt:1.4.0
+  #koenkk/zigbee2mqtt:latest-dev
 
 
 # Add to traefik-proxy network so it can reach the other container
