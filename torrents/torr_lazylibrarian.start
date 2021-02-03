@@ -15,7 +15,8 @@ if [[ $1 == "--local" ]]; then
     -v /storage/Media/Books/calibre_library:/books \
     -v /storage/Media/Audiobooks:/audiobooks \
     -e TZ="Europe/London" \
-    linuxserver/lazylibrarian
+    -e DOCKER_MODS=linuxserver/mods:universal-tshoot \
+    ghcr.io/linuxserver/lazylibrarian
 
 else
 
@@ -41,7 +42,9 @@ else
     -v /storage/Media/Books/calibre_library:/books \
     -v /storage/Media/Audiobooks:/audiobooks \
     -e TZ="Europe/London" \
-    linuxserver/lazylibrarian
+    -e DOCKER_MODS=linuxserver/mods:universal-tshoot \
+    ghcr.io/linuxserver/lazylibrarian
+
 fi
 
 if [[ $1 != "--nochecks" ]]; then

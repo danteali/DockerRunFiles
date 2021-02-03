@@ -12,7 +12,8 @@ if [[ $1 == "--local" ]]; then
     -e PGID=1000 -e PUID=1000 \
     -e TZ="Europe/London" \
     -p 5050:5050 \
-  linuxserver/couchpotato
+    -e DOCKER_MODS=linuxserver/mods:universal-tshoot \
+    ghcr.io/linuxserver/couchpotato
 
 else
 
@@ -37,7 +38,9 @@ else
     -e PGID=1000 -e PUID=1000 \
     -e TZ="Europe/London" \
     --net=container:torr_pia \
-    linuxserver/couchpotato
+    -e DOCKER_MODS=linuxserver/mods:universal-tshoot \
+    ghcr.io/linuxserver/couchpotato
+
 fi
 
 

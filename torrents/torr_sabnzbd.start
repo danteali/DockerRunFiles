@@ -15,7 +15,8 @@ if [[ $1 == "--local" ]]; then
     -e TZ="Europe/London" \
     -p 9092:8080 \
     -p 9093:9090 \
-    linuxserver/sabnzbd
+    -e DOCKER_MODS=linuxserver/mods:universal-tshoot \
+    ghcr.io/linuxserver/sabnzbd
 
 else
 
@@ -39,7 +40,8 @@ else
     -e PGID=1000 -e PUID=1000 \
     -e TZ="Europe/London" \
     --net=container:torr_pia \
-    linuxserver/sabnzbd
+    -e DOCKER_MODS=linuxserver/mods:universal-tshoot \
+    ghcr.io/linuxserver/sabnzbd
 
 fi
 

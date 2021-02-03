@@ -46,6 +46,8 @@ docker run -d \
   -l "traefik.sonarr.frontend.rule=Host:sonarr.$FQDN" \
   -l "traefik.radarr.port=7878" \
   -l "traefik.radarr.frontend.rule=Host:radarr.$FQDN" \
+  -l "traefik.bazarr.port=6767" \
+  -l "traefik.bazarr.frontend.rule=Host:bazarr.$FQDN" \
   -l "traefik.jackett.port=9117" \
   -l "traefik.jackett.frontend.rule=Host:jackett.$FQDN" \
   `#-l "traefik.lazylibrarian.port=5299"` \

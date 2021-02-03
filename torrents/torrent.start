@@ -21,6 +21,7 @@ docker rm -f -v \
   torr_lazylibrarian \
   torr_jackett \
   torr_couchpotato \
+  torr_bazarr \
   torr_radarr \
   torr_sonarr \
   torr_transmission \
@@ -87,6 +88,12 @@ echo ${blue}
 echo "-------------------------- radarr ------------------------------"
 echo ${yellow}
 $SOURCE/torr_radarr.start --nochecks
+echo ${reset}
+
+echo ${blue}
+echo "-------------------------- bazarr ------------------------------"
+echo ${yellow}
+$SOURCE/torr_bazarr.start --nochecks
 echo ${reset}
 
 #echo ${blue}

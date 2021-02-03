@@ -18,6 +18,7 @@ docker run -d \
   --link torr_pia:torr_transmission \
   --link torr_pia:torr_sonarr \
   --link torr_pia:torr_radarr \
+  --link torr_pia:torr_bazarr \
   --link torr_pia:torr_jackett \
   --link torr_pia:torr_desktop \
   --link torr_pia:torr_couchpotato \

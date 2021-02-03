@@ -16,8 +16,10 @@ if [[ $1 == "--local" ]]; then
     -v /storage/Media/Video:/all_vids_ro:ro \
     -e PGID=1000 -e PUID=1000  \
     -e TZ="Europe/London" \
+    -e DOCKER_MODS=linuxserver/mods:universal-tshoot \
     -p 7878:7878 \
-    linuxserver/radarr
+    ghcr.io/linuxserver/radarr
+
 
 else
 
@@ -43,8 +45,9 @@ else
     -v /storage/Media/Video:/all_vids_ro:ro \
     -e PGID=1000 -e PUID=1000  \
     -e TZ="Europe/London" \
+    -e DOCKER_MODS=linuxserver/mods:universal-tshoot \
     --net=container:torr_pia \
-    linuxserver/radarr
+    ghcr.io/linuxserver/radarr
 
 fi
 
