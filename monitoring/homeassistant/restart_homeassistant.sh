@@ -3,6 +3,9 @@
 # Check running as root - needed for logrotation
     if [ $(id -u) -ne 0 ]; then tput setaf 1; echo "Not running as root, attempting to automatically restart script with root access..."; tput sgr0; echo; sudo $0 $*; exit 1; fi
 
+# (Re-)Install latest HACS
+    /home/ryan/scripts/docker/monitoring/homeassistant/update_hacs.sh
+
 # Rotate log as it makes it easier to analyse log file at /var/log/homeassistant/ instead of using dlog home-assistant
     echo
     echo "Rotating HA logs..."

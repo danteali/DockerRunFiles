@@ -19,6 +19,9 @@ if [[ $1 == "--local" ]]; then
     -e DOCKER_MODS=linuxserver/mods:universal-tshoot \
     -p 7878:7878 \
     ghcr.io/linuxserver/radarr
+    #ghcr.io/linuxserver/radarr:version-3.0.1.4259
+    #ghcr.io/linuxserver/radarr:version-3.0.2.4552
+    #ghcr.io/linuxserver/radarr:latest
 
 
 else
@@ -48,6 +51,9 @@ else
     -e DOCKER_MODS=linuxserver/mods:universal-tshoot \
     --net=container:torr_pia \
     ghcr.io/linuxserver/radarr
+    #ghcr.io/linuxserver/radarr:version-3.0.1.4259
+    #ghcr.io/linuxserver/radarr:version-3.0.2.4552
+    #ghcr.io/linuxserver/radarr:latest
 
 fi
 

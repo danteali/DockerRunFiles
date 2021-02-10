@@ -34,6 +34,9 @@ docker create \
   -l "traefik.frontend.auth.basic.users=${secrets[USERNAME]}:${secrets[PASSWORD]}" \
   `# -------------------------------------` \
   raymondmm/tasmoadmin
+  #raymondmm/tasmoadmin:beta
+  #raymondmm/tasmoadmin:v1.7.0
+  #raymondmm/tasmoadmin:latest
 
 
 # Add to traefik-proxy network so it can reach the other container

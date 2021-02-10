@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Do #1 first, then additional commands.
+
 # Update config files
     echo
     echo "Updating any changed .yaml files..."

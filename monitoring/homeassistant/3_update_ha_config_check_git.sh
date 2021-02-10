@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Do #2 first (which in trun does #1), then additional commands.
+
 # ============================================================================================
 # Exit on any failed commands - will exit script if any command fails 
 # i.e. won't try to push to git push if config check fails.
