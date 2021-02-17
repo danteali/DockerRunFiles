@@ -19,6 +19,7 @@ if [[ $1 == "--local" ]]; then
     -v /storage/Docker/torr_sonarr:/config \
     -v /storage/Media/Video/TV:/tv \
     -v /storage/scratchpad/downloads:/downloads \
+    -v /storage/Media/Video:/all_vids \
     -e DOCKER_MODS=linuxserver/mods:universal-tshoot \
     ghcr.io/linuxserver/sonarr
     #linuxserver/sonarr:2.0.0.5322-ls27
@@ -45,6 +46,7 @@ else
     -v /storage/Docker/torr_sonarr:/config \
     -v /storage/Media/Video/TV:/tv \
     -v /storage/scratchpad/downloads:/downloads \
+    -v /storage/Media/Video:/all_vids \
     -e DOCKER_MODS=linuxserver/mods:universal-tshoot \
     --net=container:torr_pia \
     ghcr.io/linuxserver/sonarr
