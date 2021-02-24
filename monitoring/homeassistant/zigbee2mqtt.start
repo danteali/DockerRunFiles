@@ -35,6 +35,7 @@ docker create \
   -l "traefik.frontend.rule=Host:zigbee2mqtt.$FQDN" \
   `# -------------------------------------` \
   koenkk/zigbee2mqtt:1.17.0 #Working fine
+  #koenkk/zigbee2mqtt:1.17.1
   #koenkk/zigbee2mqtt:latest
   #koenkk/zigbee2mqtt:1.16.2
   #koenkk/zigbee2mqtt:1.14.2
