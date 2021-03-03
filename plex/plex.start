@@ -51,7 +51,7 @@ docker create \
   -v /storage/Docker/plex/config:/config \
   `#-v /tmp/plex/transcode:/transcode` \
   -v /storage/Docker/plex/transcode:/transcode \
-  -v /storage/Media/Video:/data:ro \
+  -v /storage/Media/Video:/data \
   -v /storage/Media/Audio:/Music:ro \
   -v /storage/Media/Pictures:/Pictures:ro \
   -v /storage/scratchpad:/scratchpad:ro \
