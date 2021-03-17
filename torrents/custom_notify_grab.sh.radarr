@@ -10,10 +10,10 @@
 #
 # Only configuring for grabbing epidodes since existing notifications are fine for downloads etc.
 #
-# Save in /storage/Docker/torr_sonarr since it gets mounted to /config
+# Save in /storage/Docker/torr_radarr since it gets mounted to /config
 # Save custom_notify.conf file in same directory.
 #
-# Relevant env vars on grab: https://github.com/Radarr/Radarr/wiki/Custom-Post-Processing-Scripts#on-grab
+# Relevant env vars on grab: https://wiki.servarr.com/Radarr_Tips_and_Tricks
 # $radarr_movie_title
 # $radarr_release_title
 # $radarr_release_indexer
@@ -91,9 +91,9 @@ MESSAGE+="]"
     curl -s -S -X POST --data-urlencode "payload=$(< /tmp/slack_payload)" "${sl_webhook_url}"
 
 # Pushbullet Notification
-    pb_api_key="${secrets[PB_API_KEY]}"
-    curl -s -o /dev/null \
-        -u $pb_api_key: https://api.pushbullet.com/v2/pushes \
-        -d type=note \
-        -d title="$TITLE" \
-        -d body="$MESSAGE"
+#    pb_api_key="${secrets[PB_API_KEY]}"
+#    curl -s -o /dev/null \
+#        -u $pb_api_key: https://api.pushbullet.com/v2/pushes \
+#        -d type=note \
+#        -d title="$TITLE" \
+#        -d body="$MESSAGE"

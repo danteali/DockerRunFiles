@@ -126,9 +126,9 @@ MESSAGE+="]"
 # Existing:
     # Title: Sonarr - Episode Grabbed
     # Message: Paul Hollywood City Bakes - 1x06 - Copenhagen [HDTV-720p]
-    pb_api_key="${secrets[PB_API_KEY]}"
-    curl -s -o /dev/null \
-        -u $pb_api_key: https://api.pushbullet.com/v2/pushes \
-        -d type=note \
-        -d title="$TITLE" \
-        -d body="$MESSAGE"
+#    pb_api_key="${secrets[PB_API_KEY]}"
+#    curl -s -o /dev/null \
+#        -u $pb_api_key: https://api.pushbullet.com/v2/pushes \
+#        -d type=note \
+#        -d title="$TITLE" \
+#        -d body="$MESSAGE"
