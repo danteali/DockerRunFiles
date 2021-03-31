@@ -36,6 +36,12 @@
 #    sonarr_release_quality="HDTV-720p"
 #    sonarr_release_indexer="piratebay"
 
+# When adding to sonarr it sometimes gets hung up for no reason when clicking OK on the custom script dialogue.
+# We can 'bypass' the script success checking by adding below exit command right here.
+# Remember to comment out after adding script in sonarr GUI.
+#exit
+
+
 # Get sensitive info from .conf file
 CONF_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 typeset -A secrets    # Define array to hold variables 
