@@ -11,9 +11,6 @@
 # Check running as root - needed for logrotation
     if [ $(id -u) -ne 0 ]; then tput setaf 1; echo "Not running as root, attempting to automatically restart script with root access..."; tput sgr0; echo; sudo $0 $*; exit 1; fi
 
-# (Re-)Install latest HACS
-    /home/ryan/scripts/docker/monitoring/homeassistant/update_hacs.sh
-
 # Get sensitive info from .conf file
 CONF_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 typeset -A secrets    # Define array to hold variables 
@@ -36,6 +33,9 @@ sudo rm /storage/Docker/home-assistant/config/home-assistant_v2.db
 # Rotate log as it makes it easier to analyse log file at /var/log/homeassistant/ instead of using 
 # 'dlog home-assistant'
 sudo logrotate -vf /etc/logrotate.d/homeassistant
+
+# (Re-)Install latest HACS
+/home/ryan/scripts/docker/monitoring/homeassistant/update_hacs.sh
 
 # Create container, then add to traefik-proxy network, then start it to make sure it has access to 
 # it's 'normal' network. We use 'docker create' to create the container, then 'docker network 

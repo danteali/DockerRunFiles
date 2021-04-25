@@ -6,7 +6,10 @@
     /home/ryan/scripts/docker/monitoring/homeassistant/3_update_ha_config_check_git.sh
 
 # Restart HA
-    /home/ryan/scripts/docker/monitoring/homeassistant/restart_homeassistant.sh
+    # via POST - doesn't recreate container
+    #/home/ryan/scripts/docker/monitoring/homeassistant/restart_homeassistant.sh
+    # restart whole container
+    /home/ryan/scripts/docker/monitoring/homeassistant/home-assistant.start
 
 # Restart node red
     #/home/ryan/scripts/docker/monitoring/homeassistant/node-red.start
