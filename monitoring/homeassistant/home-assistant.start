@@ -28,7 +28,7 @@ NAME="home-assistant"
 docker rm -f -v $NAME
 
 # Delete old logging data as sometimes causes issues restarting conatiner
-sudo rm /storage/Docker/home-assistant/config/home-assistant_v2.db
+#sudo rm /storage/Docker/home-assistant/config/home-assistant_v2.db
 
 # Rotate log as it makes it easier to analyse log file at /var/log/homeassistant/ instead of using 
 # 'dlog home-assistant'
