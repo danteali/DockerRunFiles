@@ -33,12 +33,13 @@ docker create \
   --restart="unless-stopped" \
   --name=$NAME \
   -e TZ=Europe/London \
-  -e UMASK_SET=022 \
+  -e UMASK=022 \
   -p 8384:8384 \
   -p 22000:22000 \
   -p 21027:21027/udp \
   -e PUID=1000 \
   -e PGID=1000 \
+  -e DOCKER_MODS=linuxserver/mods:universal-tshoot \
   -v /storage/Docker/syncthing/config:/config \
   -v /storage/Backup:/Backup \
   -v /storage/Docker:/Docker \
@@ -49,7 +50,7 @@ docker create \
   -l "traefik.port=8384" \
   -l "traefik.frontend.rule=Host:$NAME.$FQDN" \
   `# -------------------------------------` \
-  linuxserver/syncthing 
+  linuxserver/syncthing:latest
 
 # Add to bridge & traefik-proxy network so it can reach the other container
 docker network connect bridge $NAME
