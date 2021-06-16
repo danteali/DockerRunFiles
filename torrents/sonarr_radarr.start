@@ -13,10 +13,13 @@ VPNCONNECTED=0
 
 echo ${red} && echo "================ ${txtund}Stopping running Sonarr & Radarr (& Jackett)${reset}${red} ==================="
 echo ${reset}
-docker rm -f -v \
-  torr_radarr \
-  torr_sonarr \
-  torr_jackett
+docker stop torr_radarr
+docker stop torr_sonarr
+docker stop torr_jackett
+
+docker rm -f -v torr_radarr
+docker rm -f -v torr_sonarr
+docker rm -f -v torr_jackett
 
 echo ${green} && echo "================== ${txtund}Starting Sonarr & Radarr (& Jackett)${reset}${green} ==================="
 

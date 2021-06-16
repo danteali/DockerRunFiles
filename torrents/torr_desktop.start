@@ -3,6 +3,7 @@
 # Ubuntu only needed to access Jackett with nginx proxy
 # No longer needed now that we're using Traefik since Jackett now accessible directly through Traefik
 
+docker stop torr_desktop
 docker rm -f -v torr_desktop
 
 ## Start container for remote desktop to torr_pia network

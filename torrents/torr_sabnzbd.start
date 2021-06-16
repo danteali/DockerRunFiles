@@ -1,5 +1,6 @@
 #!/bin/bash
 
+docker stop torr_sabnzbd > /dev/null 2>&1
 docker rm -f -v torr_sabnzbd > /dev/null 2>&1
 
 

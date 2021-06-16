@@ -58,13 +58,13 @@ else
     
 
     echo ""
-    echo "${yellow}LOGFILE SIZES ($d_name)"
+    echo "${yellow}LOGFILE SIZES (${green}$d_name${yellow})"
     echo "[also included in docker-managed storage above]"
     sudo du -c -d 1 -h /var/lib/docker/containers/$d_id/*.log | \
         sed 's/^/    /'
         
     echo ""
-    echo "${blue}LIST USER-DEFINED VOLUMES ($d_name)"
+    echo "${blue}LIST USER-DEFINED VOLUMES (${green}$d_name${blue})"
     echo "[manually check sizes if needed]"
     # This gets the local mapping locations only
         #docker inspect -f "{{.Mounts}}" $d_id_short | \
@@ -74,12 +74,12 @@ else
         #    sed -n '0~2!p' | \
         #    sed 's/^/    /'
     # Get both sides of mapping
-        docker inspect -f "{{.HostConfig.Binds}}" 64080f94a1b2 | \
+        docker inspect -f "{{.HostConfig.Binds}}" $d_id | \
             tr ' ' '\n' | \
             sed 's/\:ro\|:rw//g' | \
             tr -d [ | \
             tr -d ] | \
-            sed 's/:/ \<-\> /g' | \
+            sed 's/:/\n     ----\> /g' | \
             sed 's/^/    /'
 
     echo ""

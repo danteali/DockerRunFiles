@@ -20,6 +20,7 @@ done < $CONF_DIR/torr_pia.conf
 
 FQDN="${secrets[FQDN]}"
 
+docker stop torr_pia > /dev/null 2>&1
 docker rm -f -v torr_pia > /dev/null 2>&1
 
 #List of PIA's ovpn files are here: https://github.com/ColinHebert/pia-openvpn/tree/master/pia

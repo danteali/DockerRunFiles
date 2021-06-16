@@ -5,6 +5,7 @@
 #  - Build 2.0.0.5322-ls27 released 24th July, updated to 2.0.0.5322-ls28 on 1st Aug and 2.0.0.5322-ls29 on 3rd Aug.
 #  - Restored duplicacy backup from 2nd Aug 3am and build 2.0.0.5322-ls28 - left tag static for now
 
+docker stop torr_sonarr > /dev/null 2>&1
 docker rm -f -v torr_sonarr > /dev/null 2>&1
 
 

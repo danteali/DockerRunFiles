@@ -14,19 +14,31 @@ VPNCONNECTED=0
 
 echo ${red} && echo "================ ${txtund}Stopping any torrent containers${reset}${red} ==================="
 echo ${reset}
-docker rm -f -v \
-  torrentproxy \
-  torr_desktop \
-  torr_sabnzbd \
-  torr_lazylibrarian \
-  torr_jackett \
-  torr_couchpotato \
-  torr_bazarr \
-  torr_radarr \
-  torr_sonarr \
-  torr_transmission \
-  torr_pia \
-  dockprom-transmission-exporter
+docker stop torrentproxy
+docker stop torr_desktop
+docker stop torr_sabnzbd
+docker stop torr_lazylibrarian
+docker stop torr_jackett
+docker stop torr_couchpotato
+docker stop torr_bazarr
+docker stop torr_radarr
+docker stop torr_sonarr
+docker stop torr_transmission
+docker stop torr_pia
+docker stop dockprom-transmission-exporter
+
+docker rm -f -v torrentproxy
+docker rm -f -v torr_desktop
+docker rm -f -v torr_sabnzbd
+docker rm -f -v torr_lazylibrarian
+docker rm -f -v torr_jackett
+docker rm -f -v torr_couchpotato
+docker rm -f -v torr_bazarr
+docker rm -f -v torr_radarr
+docker rm -f -v torr_sonarr
+docker rm -f -v torr_transmission
+docker rm -f -v torr_pia
+docker rm -f -v dockprom-transmission-exporter
 
 echo ${green} && echo "================== ${txtund}Starting torrent containers${reset}${green} ==================="
 

@@ -13,5 +13,5 @@
         sudo xargs wget {} -O /tmp/hacs.zip
 
 # Extract to ../config/customer_components/hacs/
-    echo "Extracting hacs.zip to /storage/Docker/home-assistant/config/customer_components/hacs/ ..."
-    sudo unzip -o /tmp/hacs.zip -d /storage/Docker/home-assistant/config/custom_components/hacs/
+    echo "Extracting hacs.zip to /storage/Docker/home-assistant/config/custom_components/hacs/ ..."
+    sudo unzip -q -o /tmp/hacs.zip -d /storage/Docker/home-assistant/config/custom_components/hacs/

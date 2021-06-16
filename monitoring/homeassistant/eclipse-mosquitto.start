@@ -2,6 +2,7 @@
 
 NAME="eclipse-mosquitto"
 
+docker stop $NAME
 docker rm -f -v $NAME
 
 docker run -d \

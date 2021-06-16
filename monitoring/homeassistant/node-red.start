@@ -22,6 +22,7 @@ FQDN="${secrets[FQDN]}"
 NAME="node-red"
 
 
+docker stop $NAME
 docker rm -f -v $NAME
 
 #docker run -d \

@@ -24,7 +24,7 @@ done < $CONF_DIR/home-assistant.conf
 FQDN="${secrets[FQDN]}"
 NAME="home-assistant"
 
-
+docker stop $NAME
 docker rm -f -v $NAME
 
 # Delete old logging data as sometimes causes issues restarting conatiner
@@ -76,6 +76,7 @@ docker create \
   --log-opt max-size=20m \
   --log-opt max-file=10 \
   homeassistant/home-assistant:stable
+  #homeassistant/home-assistant:2021.6.2
   #homeassistant/home-assistant:2021.1.5
   #homeassistant/home-assistant:2020.7.16
   #homeassistant/home-assistant:0.113.3

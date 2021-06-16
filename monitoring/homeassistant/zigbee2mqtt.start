@@ -13,6 +13,7 @@ done < $CONF_DIR/zigbee2mqtt.conf
 FQDN="${secrets[FQDN]}"
 NAME="zigbee2mqtt"
 
+docker stop $NAME
 docker rm -f -v $NAME
 
 docker create \
