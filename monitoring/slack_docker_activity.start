@@ -16,6 +16,7 @@ echo ${secrets[SL_WEBHOOK_URL]}
 
 NAME="slack_docker_activity"
 
+docker stop $NAME
 docker rm -f -v $NAME
 
 docker run -d \

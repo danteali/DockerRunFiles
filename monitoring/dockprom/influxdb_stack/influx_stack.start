@@ -2,6 +2,10 @@
 
 WHEREAMI="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
+docker stop dockprom_influxdb
+docker stop dockprom_chronograf
+docker stop dockprom_telegraf
+
 docker rm -f -v dockprom_influxdb
 docker rm -f -v dockprom_chronograf
 docker rm -f -v dockprom_telegraf

@@ -13,6 +13,7 @@ done < $CONF_DIR/chronograf.conf
 FQDN="${secrets[FQDN]}"
 NAME="dockprom_chronograf"
 
+docker stop $NAME
 docker rm -f -v $NAME
 
 #docker run -d \

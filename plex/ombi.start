@@ -17,6 +17,7 @@ FQDN="${secrets[FQDN]}"
 NAME=ombi
 
 #docker rm -f -v plexpy
+docker stop $NAME
 docker rm -f -v $NAME
 
 # Create container, then add to traefik-proxy network, then start it to make sure it has access to it's 'normal' network

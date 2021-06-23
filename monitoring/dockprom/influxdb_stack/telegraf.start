@@ -12,6 +12,7 @@ done < $CONF_DIR/telegraf.conf
 
 NAME="dockprom_telegraf"
 
+docker stop $NAME
 docker rm -f -v $NAME
 
 docker run -d \

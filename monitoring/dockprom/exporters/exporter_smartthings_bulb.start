@@ -12,6 +12,7 @@ done < $CONF_DIR/exporters.conf
 
 NAME="dockprom-smartthingsbulb-exporter"
 
+docker stop $NAME
 docker rm -f -v $NAME
 
 #docker run -d \

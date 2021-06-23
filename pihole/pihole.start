@@ -23,7 +23,8 @@ done < $CONF_DIR/pihole.conf
 FQDN="${secrets[FQDN]}"
 NAME="pihole"
 
-docker rm -f -v pihole
+docker stop $NAME
+docker rm -f -v $NAME
 
 # Could not get working properly with Traefik by using docker labels.
 # Using Traefik's [file] config instead - see traefik.toml

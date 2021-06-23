@@ -13,6 +13,7 @@ done < $CONF_DIR/exporters.conf
 
 NAME="dockprom-transmission-exporter"
 
+docker stop $NAME
 docker rm -f -v $NAME
 
 docker create \

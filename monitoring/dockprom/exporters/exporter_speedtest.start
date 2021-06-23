@@ -2,6 +2,7 @@
 
 NAME="dockprom-speedtest-exporter"
 
+docker stop $NAME
 docker rm -f -v $NAME
 
 docker run -d \
