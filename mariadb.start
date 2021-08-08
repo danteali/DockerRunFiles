@@ -18,6 +18,7 @@ while read line; do
 done < $CONF_DIR/mariadb.conf
 #echo ${secrets[MYSQL_ROOT_PASSWORD]}
 
+docker stop mariadb
 docker rm -f -v mariadb
 
 docker run -d \

@@ -24,8 +24,8 @@ FQDN="${secrets[FQDN]}"
 NAME="nextcloud"
 SUBDOMAIN="nc"
 
+docker stop $NAME
 docker rm -f -v $NAME
-
 
 
 # Check DB is running, and start if not
@@ -60,8 +60,10 @@ docker create \
   --restart="unless-stopped" \
   --link mariadb:mariadb \
   -v /storage/Backup/Current/Nextcloud:/data \
-  -v /storage/Docker/nextcloud/config:/config \
-  -v /storage/Docker/nextcloud/apps:/apps2 \
+  `#-v /storage/Docker/nextcloud/config:/config` \
+  `#-v /storage/Docker/nextcloud/apps:/apps2` \
+  -v /storage/Docker/nextcloud/config:/nextcloud/config \
+  -v /storage/Docker/nextcloud/apps:/nextcloud/apps2 \
   -v /storage/Docker/nextcloud/themes:/nextcloud/themes \
   -e UID=1000 -e GID=1000 \
   -e UPLOAD_MAX_SIZE=10G \
@@ -90,7 +92,8 @@ docker create \
   -l "traefik.frontend.redirect.regex=https://(.*)/.well-known/(carddav|caldav)" \
   -l "traefik.frontend.redirect.replacement=https://$SUBDOMAIN.$FQDN/remote.php/dav" \
   `# -------------------------------------` \
-  wonderfall/nextcloud:latest
+  ghcr.io/wonderfall/nextcloud:22.0.0
+  #wonderfall/nextcloud:latest
 
 # Add to traefik-proxy network so it can reach the other container - '--link' options above doesn't seem to work proerly if we try to add straight to traefik-proxy above.
 docker network connect bridge $NAME
