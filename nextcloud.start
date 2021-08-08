@@ -92,7 +92,10 @@ docker create \
   -l "traefik.frontend.redirect.regex=https://(.*)/.well-known/(carddav|caldav)" \
   -l "traefik.frontend.redirect.replacement=https://$SUBDOMAIN.$FQDN/remote.php/dav" \
   `# -------------------------------------` \
-  ghcr.io/wonderfall/nextcloud:22.0.0
+  ghcr.io/wonderfall/nextcloud:latest
+
+  # This was 'latest' in Aug 21 when I last had issues following the wonderfall update and change to ghcr.io
+  #ghcr.io/wonderfall/nextcloud:22.1.0
   #wonderfall/nextcloud:latest
 
 # Add to traefik-proxy network so it can reach the other container - '--link' options above doesn't seem to work proerly if we try to add straight to traefik-proxy above.
