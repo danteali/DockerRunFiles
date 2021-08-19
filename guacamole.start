@@ -17,6 +17,10 @@ done < $CONF_DIR/guacamole.conf
 SUBDOMAIN="guac"
 FQDN="${secrets[FQDN]}"
 
+docker stop guacamole
+docker stop guacd
+docker stop desktop-vnc
+
 docker rm -f -v guacamole
 docker rm -f -v guacd
 docker rm -f -v desktop-vnc

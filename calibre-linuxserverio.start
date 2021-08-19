@@ -24,6 +24,7 @@ SUBDOMAIN_GUAC="calibre"
 #SUBDOMAIN_WEB="calibre-gui"
 FQDN="${secrets[FQDN]}"
 
+docker stop $NAME
 docker rm -f -v $NAME
 
 # Create container, then add to traefik-proxy network, then start it to make sure it has access to it's 'normal' network

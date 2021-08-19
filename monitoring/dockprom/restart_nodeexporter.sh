@@ -12,4 +12,7 @@ done < $CONF_DIR/dockprom.conf
 USERNAME="${secrets[USERNAME]}"
 PASSWORD="${secrets[PASSWORD]}"
 
+docker stop nodeexporter
+docker rm -f -v nodeexporter
+
 ADMIN_USER=$USERNAME ADMIN_PASSWORD=$PASSWORD docker-compose -f /storage/Docker/dockprom/docker-compose.yml up -d --force-recreate nodeexporter

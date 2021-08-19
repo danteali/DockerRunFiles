@@ -25,6 +25,7 @@ done < $CONF_DIR/unms.conf
 FQDN="${secrets[FQDN]}"
 NAME=unms
 
+docker stop $NAME
 docker rm -f -v $NAME
 
 # Could not get working properly with Traefik by using docker labels.

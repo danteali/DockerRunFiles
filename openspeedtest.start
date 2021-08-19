@@ -23,6 +23,7 @@ done < $CONF_DIR/openspeedtest.conf
 FQDN="${secrets[FQDN]}"
 NAME="openspeedtest"
 
+docker stop $NAME
 docker rm -f -v $NAME
 
 # Since we can't assign two networks with 'docker run' we need to create the container first,

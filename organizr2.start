@@ -22,6 +22,7 @@ done < $CONF_DIR/organizr2.conf
 FQDN="${secrets[FQDN]}"
 NAME="organizr2"
 
+docker stop $NAME
 docker rm -f -v $NAME
 
 # Create container, then add to traefik-proxy network, then start it to make sure it has access to it's 'normal' network

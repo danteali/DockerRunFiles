@@ -2,6 +2,7 @@
 
 NAME="elk_curator"
 
+docker stop $NAME
 docker rm -f -v $NAME
 
 docker run --rm \

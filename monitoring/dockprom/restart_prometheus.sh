@@ -12,4 +12,7 @@ done < $CONF_DIR/dockprom.conf
 USERNAME="${secrets[USERNAME]}"
 PASSWORD="${secrets[PASSWORD]}"
 
+docker stop prometheus
+docker rm -f -v prometheus
+
 ADMIN_USER=$USERNAME ADMIN_PASSWORD=$PASSWORD docker-compose -f /storage/Docker/dockprom/docker-compose.yml up -d --force-recreate prometheus

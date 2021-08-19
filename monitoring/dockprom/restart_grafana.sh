@@ -12,6 +12,9 @@ done < $CONF_DIR/dockprom.conf
 USERNAME="${secrets[USERNAME]}"
 PASSWORD="${secrets[PASSWORD]}"
 
+docker stop grafana
+docker rm -f -v grafana
+
 # Frontend explicitly defined in the traefik.toml file. 
 
 ADMIN_USER=$USERNAME ADMIN_PASSWORD=$PASSWORD docker-compose -f /storage/Docker/dockprom/docker-compose.yml up -d --force-recreate grafana

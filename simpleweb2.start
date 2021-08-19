@@ -25,6 +25,8 @@ done < $CONF_DIR/simpleweb.conf
 FQDN="${secrets[FQDN]}"
 NAME="simpleweb2"
 
+
+docker stop $NAME
 docker rm -f -v $NAME
 
 # Since we can't assign two networks with 'docker run' we need to create the container first,

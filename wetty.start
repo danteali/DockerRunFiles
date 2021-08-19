@@ -29,6 +29,7 @@ FQDN="${secrets[FQDN]}"
 NAME="wetty"
 
 
+docker stop $NAME
 docker rm -f -v $NAME
 
 #docker run -d \

@@ -16,6 +16,7 @@ done < $CONF_DIR/ubooquity.conf
 FQDN="${secrets[FQDN]}"
 NAME="ubooquity"
 
+docker stop $NAME
 docker rm -f -v $NAME
 
 # Since we can't assign two networks with 'docker run' we need to create the container first,

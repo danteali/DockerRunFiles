@@ -24,6 +24,7 @@ NAME="onlyoffice"
 SUBDOMAIN=$NAME
 FQDN="${secrets[FQDN]}"
 
+docker stop $NAME
 docker rm -f -v $NAME
 
 #docker run -d \

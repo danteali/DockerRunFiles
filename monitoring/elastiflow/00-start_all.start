@@ -3,6 +3,11 @@
 WHEREAMI="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 #Stop all
+docker stop elastiflow
+docker stop elastiflow-elasticsearch-oss
+docker stop elastiflow-kibana-oss
+docker stop elastiflow-logstash-oss
+
 docker rm -f -v elastiflow
 docker rm -f -v elastiflow-elasticsearch-oss
 docker rm -f -v elastiflow-kibana-oss

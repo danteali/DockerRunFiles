@@ -27,6 +27,7 @@ NAME="collabora"
 SUBDOMAIN=$NAME
 FQDN="${secrets[FQDN]}"
 
+docker stop $NAME
 docker rm -f -v $NAME
 
 # Using Nextcloud's network stack therefore port 9980 exposed in that start file not here
