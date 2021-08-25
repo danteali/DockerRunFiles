@@ -54,7 +54,9 @@ docker create \
   `###### Username/password defined in file in Traefik volume` \
   `#-l "traefik.frontend.auth.basic.usersFile=/etc/traefik/htpasswds/htpasswd_simpleweb"` \
   `# -------------------------------------` \
-  squidfunk/mkdocs-material
+  mkdocs-custom:latest
+  #squidfunk/mkdocs-material
+  # Using custom built image which includes extra plugins e.g. roamlinks
 
 # Add to bridge & traefik-proxy network so it can reach the other container
 docker network connect bridge $NAME

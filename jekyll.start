@@ -31,7 +31,7 @@ docker rm -f -v $NAME
 # Since we can't assign two networks with 'docker run' we need to create the container first,
 # then add to traefik-proxy network and default bridge network before starting it.
 
-TARGET=/storage/scratchpad/GitHubRepos/Jekyll-Test/jekyll-test-site/test-site
+TARGET=/storage/scratchpad/GitHubRepos/Jekyll-Test/jekyll-minima/minima
 
 #docker run -d \
 docker create \
