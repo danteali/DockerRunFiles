@@ -30,7 +30,14 @@ docker create \
   --name=$NAME \
   --restart="unless-stopped" \
   -l org.label-schema.group="monitoring" \
-  `#-p 1880:1880` \
+  `# A dedicated IP means port mapping does not have any effect.` \
+  `# All ports are accessible on dedicated IP and no ports on docker host` \
+  `# are mapped.` \
+  `# Traefik will still redirect FQDN to container through proxy network.` \
+  `# However leaving commented out in case we need to re-enable since` \
+  `# these should still work fine for access via docker host system if` \
+  `# no LAN IP provided` \
+    `#-p 1880:1880` \
   `#-e UID=1000 -e GID=1000` \
   --network lan_net \
   --ip=${secrets[IP]} \

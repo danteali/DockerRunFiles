@@ -29,7 +29,8 @@ docker rm -f -v $NAME
 # Could not get working properly with Traefik by using docker labels.
 # Using Traefik's [file] config instead - see traefik.toml
 
-docker run -d \
+#docker run -d \
+docker create \
   --name="$NAME" \
   --restart="unless-stopped" \
   -p 53:53/tcp \
@@ -38,10 +39,10 @@ docker run -d \
   -p 37338:443 \
   `# port 67 needed if using piholes DHCP service` \
   `#-p 67:67/udp` \
-  -v /storage/Docker/pihole/config/pihole.log:/var/log/pihole.log \
-  -v /storage/Docker/pihole/config/etc/hosts:/etc/hosts \
-  -v /storage/Docker/pihole/config/etc/dnsmasq.d/:/etc/dnsmasq.d/ \
-  -v /storage/Docker/pihole/config/etc/pihole/:/etc/pihole/ \
+  -v /storage/Docker/pihole/config_4.1.1/pihole.log:/var/log/pihole.log \
+  -v /storage/Docker/pihole/config_4.1.1/etc/hosts:/etc/hosts \
+  -v /storage/Docker/pihole/config_4.1.1/etc/dnsmasq.d/:/etc/dnsmasq.d/ \
+  -v /storage/Docker/pihole/config_4.1.1/etc/pihole/:/etc/pihole/ \
   `# From 4.2.2 --cap-add NET_ADMIN no longer required unless using DHCP, leaving in case roll back to 4.1.1 needed` \
   --cap-add=NET_ADMIN \
   `# From 4.2.2 ServerIP no longer required unless customising lighttpd, leaving in case roll back to 4.1.1 needed` \
@@ -60,13 +61,20 @@ docker run -d \
   --dns 127.0.0.1 \
   --dns 1.1.1.1 \
   `# ------- Traefik Proxy Section -------` \
-  `#--network traefik-proxy` \
-  -l "traefik.enable=false" \
+  -l "traefik.enable=true" \
   -l "traefik.port=80" \
-  -l 'traefik.frontend.auth.basic.removeHeader=true' \
-  -l "traefik.frontend.auth.basic.users=${secrets[USERNAME]}:${secrets[PASSWORD]}" \
-  -l "traefik.frontend.rule=Host:pihole.$FQDN,{catchall:.*}" \
-  -l "traefik.frontend.priority=1" \
+  `#-l 'traefik.frontend.auth.basic.removeHeader=true'` \
+  `#-l "traefik.frontend.auth.basic.users=${secrets[USERNAME]}:${secrets[PASSWORD]}"` \
+  -l "traefik.frontend.rule=Host:$NAME.$FQDN,{catchall:.*}" \
+  -l traefik.frontend.headers.SSLRedirect=true \
+  -l traefik.frontend.headers.STSSeconds=315360000 \
+  -l traefik.frontend.headers.browserXSSFilter=true \
+  -l traefik.frontend.headers.contentTypeNosniff=true \
+  -l traefik.frontend.headers.forceSTSHeader=true \
+  -l traefik.frontend.headers.SSLHost=${FQDN} \
+  -l traefik.frontend.headers.STSIncludeSubdomains=true \
+  -l traefik.frontend.headers.STSPreload=true \
+  -l traefik.frontend.headers.frameDeny=true \
   `# -------------------------------------` \
   `# Dont update image with watchtower` \
   -l com.centurylinklabs.watchtower.enable=false \
@@ -74,6 +82,13 @@ docker run -d \
   #pihole/pihole:5.1.2 # Worked fine but error writing to readonly DB for any changes to white/blacklists and groups - reverted to 4.1.1
   #pihole/pihole:latest
   #pihole/pihole:4.1.1 # Confirmed working. Working config backed up 02/10/20
+
+# Add to bridge & traefik-proxy network so it can reach the other container
+docker network connect bridge $NAME
+docker network connect traefik-proxy $NAME
+
+# Start container
+docker start $NAME
 
 #printf 'Starting up pihole container '
 #for i in $(seq 1 20); do
