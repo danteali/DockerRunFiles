@@ -21,7 +21,7 @@ done < $CONF_DIR/pihole.conf
 #echo ${secrets[FQDN]}; echo ${secrets[USERNAME]}; echo ${secrets[PASSWORD]}; echo ${secrets[SERVERIP]}
 
 FQDN="${secrets[FQDN]}"
-NAME="pihole"
+NAME="pihole4"
 
 docker stop $NAME
 docker rm -f -v $NAME
