@@ -88,7 +88,7 @@ docker create \
     `#-e MYSQL_PORT=3306` \
   `# Link to desktop container if we start one` \
     `#--link desktop-vnc:desktop-vnc` \
-  -v /var/log/guacamole:/usr/local/tomcat/logs \
+  -v /var/log/docker/guacamole:/usr/local/tomcat/logs \
   -e GUACAMOLE_HOME="/etc/guacamole" \
   -v /storage/Docker/guacamole/fail2ban/logback.xml:/etc/guacamole/logback.xml \
   -e MYSQL_DATABASE="${secrets[MYSQL_DATABASE]}" \

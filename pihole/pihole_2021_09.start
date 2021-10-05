@@ -46,7 +46,7 @@ docker create \
     `#-p 37337:80/tcp` \
     `#-p 67:67/udp` `#if using DHCP`\
   `# Remember to 'touch' log file before first run or dir is created by docker` \
-  -v /storage/Docker/pihole/config_2021_09/pihole.log:/var/log/pihole.log \
+  -v /var/log/docker/pihole/pihole.log:/var/log/pihole.log \
   -v /storage/Docker/pihole/config_2021_09/etc/dnsmasq.d/:/etc/dnsmasq.d/ \
   -v /storage/Docker/pihole/config_2021_09/etc/pihole/:/etc/pihole/ \
   -e ServerIP=${secrets[SERVERIP]} \

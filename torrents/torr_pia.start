@@ -62,6 +62,8 @@ docker run -d \
   #act28/pia-openvpn
   #itsdaspecialk/pia-openvpn
   #colinhebert/pia-openvpn
+
+  #https://hub.docker.com/r/qmcgaw/gluetun - will require whole new config
   
   # I believe things keep breaking due to PIA updating the endpoints and the containers not being 
   # updated to include the new OVPN files.

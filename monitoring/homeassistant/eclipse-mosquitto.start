@@ -10,8 +10,8 @@ docker run -d \
   --restart="unless-stopped" \
   -p 1883:1883 \
   -p 9001:9001 \
-  -v /storage/Docker/eclipse-mosquitto/config/mosquitto.conf:/mosquitto/config/mosquitto.conf \
-  -v /storage/Docker/eclipse-mosquitto/log/mosquitto.log:/mosquitto/log/mosquitto.log \
-  -v /storage/Docker/eclipse-mosquitto/data/:/mosquitto/data/ \
-  eclipse-mosquitto:1.6.13
-  #eclipse-mosquitto:latest
+  -v /storage/Docker/eclipse-mosquitto/data/config/mosquitto.conf:/mosquitto/config/mosquitto.conf \
+  -v /storage/Docker/eclipse-mosquitto/data/data/:/mosquitto/data/ \
+  -v /var/log/docker/eclipse-mosquitto/:/mosquitto/log/ \
+  eclipse-mosquitto
+  #eclipse-mosquitto:1.6.13

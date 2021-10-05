@@ -42,8 +42,8 @@ docker create \
   -v /storage/Docker/traefik/config/htpasswds:/etc/traefik/htpasswds \
   -v /storage/Docker/traefik/config/certs:/etc/traefik/certs \
   -v /var/run/docker.sock:/var/run/docker.sock \
-  -v /var/log/traefik/traefik.log:/var/log/traefik/traefik.log \
-  -v /var/log/traefik/access.log:/var/log/traefik/access.log \
+  -v /var/log/docker/traefik/traefik.log:/var/log/traefik/traefik.log \
+  -v /var/log/docker/traefik/access.log:/var/log/traefik/access.log \
   -v "/etc/timezone:/etc/timezone:ro" \
   -v "/etc/localtime:/etc/localtime:ro" \
   -p 80:80 \
