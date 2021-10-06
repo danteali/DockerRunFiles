@@ -41,7 +41,7 @@ docker create \
   -e PUID=1000 \
   -e PGID=1000 \
   -e DOCKER_MODS=linuxserver/mods:universal-tshoot \
-  -v /storage/Docker/syncthing/config:/config \
+  -v /storage/Docker/syncthing/data:/config \
   -v /storage/Backup:/Backup \
   -v /storage/Docker:/Docker \
   -v /storage/Media:/Media \

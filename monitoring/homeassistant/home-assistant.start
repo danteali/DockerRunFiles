@@ -66,7 +66,7 @@ docker create \
   --privileged \
   -v /storage/Docker/$NAME/config:/config \
   -v /etc/localtime:/etc/localtime:ro \
-  -v /var/log/homeassistant/home-assistant.log:/config/home-assistant.log \
+  -v /var/log/docker/homeassistant/home-assistant.log:/config/home-assistant.log \
   -v /storage/scratchpad/:/scratchpad \
   `#--device /dev/bus/usb/002/06` \
   `#--device /dev/bus/usb/002/06:/dev/bus/usb/002/06` \
@@ -82,7 +82,8 @@ docker create \
   --log-driver json-file \
   --log-opt max-size=20m \
   --log-opt max-file=10 \
-  homeassistant/home-assistant:stable
+  ghcr.io/home-assistant/home-assistant:stable
+  #homeassistant/home-assistant:stable
   #homeassistant/home-assistant:2021.6.2
   #homeassistant/home-assistant:2021.1.5
   #homeassistant/home-assistant:2020.7.16

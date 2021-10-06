@@ -60,11 +60,12 @@ docker create \
   --restart="unless-stopped" \
   --link mariadb:mariadb \
   -v /storage/Backup/Current/Nextcloud:/data \
-  `#-v /storage/Docker/nextcloud/config:/config` \
-  `#-v /storage/Docker/nextcloud/apps:/apps2` \
-  -v /storage/Docker/nextcloud/config:/nextcloud/config \
-  -v /storage/Docker/nextcloud/apps:/nextcloud/apps2 \
-  -v /storage/Docker/nextcloud/themes:/nextcloud/themes \
+  -v /var/log/docker/nextcloud/nextcloud.log:/data/nextcloud.log \
+  `#-v /storage/Docker/nextcloud/data/config:/config` \
+  `#-v /storage/Docker/nextcloud/data/apps:/apps2` \
+  -v /storage/Docker/nextcloud/data/config:/nextcloud/config \
+  -v /storage/Docker/nextcloud/data/apps:/nextcloud/apps2 \
+  -v /storage/Docker/nextcloud/data/themes:/nextcloud/themes \
   -e UID=1000 -e GID=1000 \
   -e UPLOAD_MAX_SIZE=10G \
   -e APC_SHM_SIZE=128M \
@@ -74,6 +75,7 @@ docker create \
   -v /etc/localtime:/etc/localtime:ro \
   -e ADMIN_USER=${secrets[ADMIN_USER]} \
   -e ADMIN_PASSWORD=${secrets[ADMIN_PASSWORD]} \
+  `# Only needed for initial setup - edit config.yml after this if amendment needed` \
   -e DB_TYPE=mysql \
   -e DB_NAME=${secrets[DB_NAME]} \
   -e DB_USER=${secrets[DB_USER]} \
