@@ -29,6 +29,10 @@ docker rm -f -v $NAME
 # then 'docker start' to startup the container.
 # Also '-d' not needed with 'docker create' since 'docker start' sutomatically starts in detached mode.
 
+# Need to create a symlink for fail2ban to read log file since it can't handle spaces:
+# ln -s /var/log/docker/plex/Plex\ Media\ Server.log /var/log/docker/plex/PlexMediaServer.fail2ban
+# Use 'fail2ban' extension so that we can avoid any logrotate automation changing file.
+
 #docker run -d \
 docker create \
   --name $NAME \
@@ -48,7 +52,7 @@ docker create \
   -e PLEX_CLAIM="${secrets[PLEX_CLAIM]}" \
   -e ADVERTISE_IP="${secrets[ADVERTISE_IP]}" \
   -h crush \
-  -v /storage/Docker/plex/config:/config \
+  -v /storage/Docker/plex/data:/config \
   `#-v /tmp/plex/transcode:/transcode` \
   -v /storage/Docker/plex/transcode:/transcode \
   -v /storage/Media/Video:/data \
@@ -56,6 +60,7 @@ docker create \
   -v /storage/Media/Pictures:/Pictures:ro \
   -v /storage/scratchpad:/scratchpad:ro \
   -v /storage/scratchpad/_IPTV:/iptv \
+  -v /var/log/docker/plex:/config/Library/Application\ Support/Plex\ Media\ Server/Logs \
   --device /dev/dri:/dev/dri \
   `# ------- Traefik Proxy Section -------` \
   `#--network traefik-proxy` \
@@ -63,7 +68,7 @@ docker create \
   -l "traefik.port=32400" \
   -l "traefik.frontend.rule=Host:$NAME.$FQDN" \
   `# -------------------------------------` \
-plexinc/pms-docker
+plexinc/pms-docker:public
 
 
 # Add to traefik-proxy network so it can reach the other container - '--link' options above doesn't seem to work proerly if we try to add straight to traefik-proxy above.

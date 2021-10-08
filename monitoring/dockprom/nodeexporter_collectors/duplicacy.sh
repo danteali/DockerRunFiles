@@ -7,7 +7,7 @@
 # Prometheus will import data and display in 'node_duplicacy' metric
 
 # Specify where output file should be saved. This should be where nodeexporter looks for the files.
-OUTPUTFILE=/storage/Docker/dockprom/nodeexporter/textfile_collector/duplicacy.prom
+OUTPUTFILE=/storage/Docker/nodeexporter/textfile_collector/duplicacy.prom
 
 # Define variables
 ACTION=$1

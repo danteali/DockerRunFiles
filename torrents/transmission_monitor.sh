@@ -16,14 +16,14 @@ SOURCE="/home/ryan/scripts/docker/torrents"
 
 echo
 # Check if transmission container running. Assume that if not running then monitor not needed.
-if [ ! -z "$(docker ps | grep torr_transmission | grep Up)" ]; then
+if [ ! -z "$(docker ps | grep transmission | grep Up)" ]; then
   echo "${green}transmission container running - checking for completed torrents...${reset}" && echo
 
   #Check for completed torrents
-  docker exec torr_transmission /config/transmission_remove_completed
+  docker exec transmission /config/transmission_remove_completed
 
   #Check transmission container IP address. If not 'GB' then okay to be running. Otherwise kill.
-  docker run --rm --net=container:torr_transmission appropriate/curl curl -s ipinfo.io > $SOURCE/transmission_ip.tmp
+  docker run --rm --net=container:transmission appropriate/curl curl -s ipinfo.io > $SOURCE/transmission_ip.tmp
   IP=`cat $SOURCE/transmission_ip.tmp | grep -e \"ip | tr -d '\n\r ,"ip:'`
   CO=`cat $SOURCE/transmission_ip.tmp | grep -e country | tr -d '", ' | sed 's/country://'`
   echo "${blue}Transmission IP Address: $IP"
@@ -35,7 +35,7 @@ if [ ! -z "$(docker ps | grep torr_transmission | grep Up)" ]; then
     exit 0
   else
     echo "${red}Transmission IP in GB - VPN not connected - killing transmission container${reset}"
-    docker rm -f -v torr_transmission
+    docker rm -f -v transmission
     #pushbullet "Transmission VPN disconnected - transmission stopped" "Disconnection noted at `date`. Killed transmission"
     pushover -c "media_stack" -T "Transmission VPN disconnected - transmission stopped" -m "Disconnection noted at `date`. Killed transmission"
     slack -u torrent_stack -c "#media_stack" -t "VPN NOT CONNECTED - KILLING TRANSMISSION" -e :arrow_double_down:

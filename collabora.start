@@ -1,0 +1,64 @@
+#!/bin/bash
+
+# Now using OnlyOffice instead - probably
+# Collabora integrates with Nextcloud to allow editing of office docs in the webinterface
+
+
+# Update GitHub with any changes to Docker scripts (timeout to default No after 5s).
+read -r -n 10 -t 5 -p "`echo -e $'\e[0;35m'`Do you wish to update git repo for docker run scripts? [y/N] `echo -e $'\n\e[1;35m'`(Script will continue without updating repo if no response in 5s)`echo -e $'\e[0m'`" response
+response=${response:-No}    # Default response
+if [[ "$response" =~ ^([yY][eE][sS]|[yY])+$ ]]; then
+    /home/ryan/scripts/docker/_update_git.sh
+fi
+echo
+
+# Get sensitive info from .conf file
+CONF_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+typeset -A secrets    # Define array to hold variables 
+while read line; do
+  if echo $line | grep -F = &>/dev/null; then
+    varname=$(echo "$line" | cut -d '=' -f 1); secrets[$varname]=$(echo "$line" | cut -d '=' -f 2-)
+  fi
+done < $CONF_DIR/collabora.conf
+#echo ${secrets[FQDN]}; echo ${secrets[USERNAME]}; echo ${secrets[PASSWORD]}
+#echo ${secrets[DOMAIN1]}; echo ${secrets[DOMAIN2]}; echo ${secrets[DOMAIN3]}
+
+NAME="collabora"
+SUBDOMAIN=$NAME
+FQDN="${secrets[FQDN]}"
+
+docker stop $NAME
+docker rm -f -v $NAME
+
+# Using Nextcloud's network stack therefore port 9980 exposed in that start file not here
+
+#docker create \
+docker run -d \
+  --name=$NAME \
+  --restart="unless-stopped" \
+  --net=container:nextcloud \
+  `#-p 9980:9980`                  `# port exposed in nextcloud container as we are using the NC network stack` \
+  -e "domain=nc\\.${secrets[DOMAIN1]}\\.${secrets[DOMAIN2]}\\.${secrets[DOMAIN3]}"    `# escape any . with \\ ` \
+  -e "username=${secrets[USERNAME]}" \
+  -e "password=${secrets[PASSWORD]}" \
+  --cap-add MKNOD \
+  `# ------- Traefik Proxy Section -------` \
+  `#--network traefik-proxy` \
+  -l traefik.protocol=https \
+  -l "traefik.enable=true" \
+  -l "traefik.frontend.rule=Host:$SUBDOMAIN.$FQDN" \
+  -l "traefik.port=9980" \
+  `# -------------------------------------` \
+  collabora/code:latest
+
+
+# these vols/envvars/labels were noted in some guides. Works without them so far but noted for info:
+#    -v ${DOCKERDIR}/collabora:/config
+#    -v /Nextcloud:/data
+#    -v ${DOCKERDIR}/shared:/shared  
+#    -e "domain=nextcloud.${DOMAINNAME}"
+#    -e server_name=collabora.${DOMAINNAME}
+#    -l "traefik.frontend.rule=Host:collabora.${DOMAINNAME};PathPrefix:/"
+#    -l "traefik.frontend.headers.STSSeconds=63072000"
+#    -l "traefik.frontend.headers.browserXSSFilter=true"
+#    -l "traefik.frontend.headers.contentTypeNosniff=true"

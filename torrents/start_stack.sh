@@ -8,36 +8,36 @@ txtund=`tput sgr 0 1`          # Underline
 reset=`tput sgr0`
 
 SOURCE="/home/ryan/scripts/docker/torrents"
-IPCHECK="/home/ryan/scripts/docker/torrents/torr_pia.ipcheck"
+IPCHECK="/home/ryan/scripts/docker/torrents/ipcheck_vpn.log"
 ISPIP=`curl -s ipinfo.io | grep -e ip | tr -d '\n\r ,"ip:'`
 VPNCONNECTED=0
 
 echo ${red} && echo "================ ${txtund}Stopping any torrent containers${reset}${red} ==================="
 echo ${reset}
 docker stop torrentproxy
-docker stop torr_desktop
-docker stop torr_sabnzbd
-docker stop torr_lazylibrarian
-docker stop torr_jackett
-docker stop torr_couchpotato
-docker stop torr_bazarr
-docker stop torr_radarr
-docker stop torr_sonarr
-docker stop torr_transmission
-docker stop torr_pia
+docker stop desktop
+docker stop sabnzbd
+docker stop lazylibrarian
+docker stop jackett
+docker stop couchpotato
+docker stop bazarr
+docker stop radarr
+docker stop sonarr
+docker stop transmission
+docker stop vpn-torr
 docker stop dockprom-transmission-exporter
 
 docker rm -f -v torrentproxy
-docker rm -f -v torr_desktop
-docker rm -f -v torr_sabnzbd
-docker rm -f -v torr_lazylibrarian
-docker rm -f -v torr_jackett
-docker rm -f -v torr_couchpotato
-docker rm -f -v torr_bazarr
-docker rm -f -v torr_radarr
-docker rm -f -v torr_sonarr
-docker rm -f -v torr_transmission
-docker rm -f -v torr_pia
+docker rm -f -v desktop
+docker rm -f -v sabnzbd
+docker rm -f -v lazylibrarian
+docker rm -f -v jackett
+docker rm -f -v couchpotato
+docker rm -f -v bazarr
+docker rm -f -v radarr
+docker rm -f -v sonarr
+docker rm -f -v transmission
+docker rm -f -v vpn-torr
 docker rm -f -v dockprom-transmission-exporter
 
 echo ${green} && echo "================== ${txtund}Starting torrent containers${reset}${green} ==================="
@@ -46,12 +46,12 @@ echo ${blue}
 echo "---------------------------- PIA -------------------------------"
 echo ${yellow}
 
-$SOURCE/torr_pia.start --nochecks
+$SOURCE/vpn-torr.start --nochecks
 echo ${reset}
 
 while [[ $VPNCONNECTED == 0 ]]
 do
-  docker run --rm --net=container:torr_pia appropriate/curl curl -s ipinfo.io > $IPCHECK
+  docker run --rm --net=container:vpn-torr appropriate/curl curl -s ipinfo.io > $IPCHECK
   PIAIP=`cat $IPCHECK | grep -e \"ip | tr -d '\n\r ,"ip:'`
   PIACO=`cat $IPCHECK | grep -e country | tr -d '", ' | sed 's/country://'`
 
@@ -73,7 +73,8 @@ do
   if [[ $VPNCOUNT == 10 ]]; then
     echo "${red}VPN not connected, exiting startup script."
     echo "Killing PIA container...${reset}"
-    docker rm -f -v torr_pia
+    docker stop vpn-torr
+    docker rm -f -v vpn-torr
     exit 1
   fi
 done
@@ -81,55 +82,55 @@ done
 echo ${blue}
 echo "----------------------- transmission ---------------------------"
 echo ${yellow}
-$SOURCE/torr_transmission.start --nochecks
+$SOURCE/transmission.start --nochecks
 echo ${reset}
 
 echo ${blue}
 echo "-------------------------- jackett -----------------------------"
 echo ${yellow}
-$SOURCE/torr_jackett.start --nochecks
+$SOURCE/jackett.start --nochecks
 echo ${reset}
 
 echo ${blue}
 echo "--------------------------- sonarr -----------------------------"
 echo ${yellow}
-$SOURCE/torr_sonarr.start --nochecks
+$SOURCE/sonarr.start --nochecks
 echo ${reset}
 
 echo ${blue}
 echo "-------------------------- radarr ------------------------------"
 echo ${yellow}
-$SOURCE/torr_radarr.start --nochecks
+$SOURCE/radarr.start --nochecks
 echo ${reset}
 
 echo ${blue}
 echo "-------------------------- bazarr ------------------------------"
 echo ${yellow}
-$SOURCE/torr_bazarr.start --nochecks
+$SOURCE/bazarr.start --nochecks
 echo ${reset}
 
 #echo ${blue}
 #echo "---------------------- LazyLibrarian ---------------------------"
 #echo ${yellow}
-#$SOURCE/torr_lazylibrarian.start --nochecks
+#$SOURCE/lazylibrarian.start --nochecks
 #echo ${reset}
 
 #echo ${blue}
 #echo "------------------------ couchpotato ---------------------------"
 #echo ${yellow}
-#$SOURCE/torr_couchpotato.start --nochecks
+#$SOURCE/couchpotato.start --nochecks
 #echo ${reset}
 
 #echo ${blue}
 #echo "------------------------- sabnzbd ------------------------------"
 #echo ${yellow}
-#$SOURCE/torr_sabnzbd.start --nochecks
+#$SOURCE/sabnzbd.start --nochecks
 #echo ${reset}
 
 #echo ${blue}
 #echo "-------------------------- desktop ------------------------------"
 #echo ${yellow}
-#$SOURCE/torr_desktop.start
+#$SOURCE/desktop.start
 #echo ${reset}
 
 #echo ${blue}

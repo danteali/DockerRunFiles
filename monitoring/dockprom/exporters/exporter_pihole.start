@@ -22,7 +22,7 @@ docker run -d \
   --name="$NAME" \
   --network dockprom_monitor-net \
   -l org.label-schema.group="monitoring" \
-  -e INFLUX_HOST="dockprom_influxdb" \
+  -e INFLUX_HOST="influxdb" \
   -e INFLUX_USERNAME="${secrets[INFLUX_USERNAME]}" \
   -e INFLUX_PASSWORD="${secrets[INFLUX_PASSWORD]}" \
   -e INFLUX_PORT="${secrets[INFLUX_PORT]}" \

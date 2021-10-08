@@ -7,7 +7,7 @@ while read line; do
   if echo $line | grep -F = &>/dev/null; then
     varname=$(echo "$line" | cut -d '=' -f 1); secrets[$varname]=$(echo "$line" | cut -d '=' -f 2-)
   fi
-done < $CONF_DIR/torr_radarr.conf
+done < $CONF_DIR/radarr.conf
 #echo ${secrets[FQDN]}; echo ${secrets[APIKEY]}
 
 FQDN="${secrets[FQDN]}"
@@ -16,7 +16,7 @@ FQDN="${secrets[FQDN]}"
 URL="https://radarr.$FQDN"
 
 # Or we can use localhost and copy script to the config volume mounted in container then run with:
-# docker exec torr_sonarr /config/torr_sonarr_get_seriesid.sh
+# docker exec sonarr /config/sonarr_get_seriesid.sh
 #URL='http://localhost:8989'
 
 APIKEY="${secrets[APIKEY]}"

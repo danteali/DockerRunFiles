@@ -18,6 +18,6 @@ ACTION=$2
 METRIC=$3
 
 # Specify where output file should be saved.
-OUTPUTFILE=/storage/Docker/dockprom/nodeexporter/textfile_collector/$SUFFIX.prom
+OUTPUTFILE=/storage/Docker/nodeexporter/textfile_collector/$SUFFIX.prom
 
 echo "node_$SUFFIX{action=\"$ACTION\"} $METRIC" > $OUTPUTFILE

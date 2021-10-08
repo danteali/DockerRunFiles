@@ -19,7 +19,7 @@ done < $CONF_DIR/fail2ban.conf
 #echo ${secrets[F2B_DEST_EMAIL]}; echo ${secrets[F2B_SENDER]}
 #echo ${secrets[SMPTUSER]}; echo ${secrets[SMTPPASSWORD]}
 
-docker stop $NAME
+docker stop fail2ban
 docker rm -f -v fail2ban
 
 docker run -d --name fail2ban --restart always \
@@ -28,9 +28,10 @@ docker run -d --name fail2ban --restart always \
   --cap-add NET_RAW \
   -v /storage/Docker/fail2ban/crazymax/data:/data \
   -v /var/log:/var/log \
-  -v /storage/Backup/Current/Nextcloud/nextcloud.log:/logs/nextcloud.log:ro \
-  -v "/storage/Docker/plex/config/Library/Application Support/Plex Media Server/Logs/Plex Media Server.log:/logs/plex.log:ro" \
-  -v /storage/Docker/organizr2/www/db/organizrLoginLog.json:/logs/organizr2.log:ro \
+  `#-v /var/log/docker/nextcloud/nextcloud.log:/logs/nextcloud.log:ro` \
+  `#-v "/var/log/docker/plex/Plex Media Server.log:/logs/plex.log:ro"` \
+  `#-v /storage/Docker/organizr2/www/db/organizrLoginLog.json:/logs/organizr2.log:ro` \
+  `#-v /var/log/docker/organizr2/organizrLoginLog.json:/logs/organizr2.log:ro` \
   -e F2B_IPTABLES_CHAIN="FORWARD" \
   -e TZ="Europe/London" \
   -e F2B_LOG_LEVEL="INFO" \

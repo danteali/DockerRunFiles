@@ -28,7 +28,7 @@ docker run -d \
   -e PUID=1000 -e PGID=1000 \
   -e TZ="Europe/London" \
   -e MYSQL_ROOT_PASSWORD=${secrets[MYSQL_ROOT_PASSWORD]} \
-  -v /storage/Docker/mariadb:/config \
+  -v /storage/Docker/mariadb/data:/config \
   -v /storage/Docker/mariadb_backups:/backups \
   -l com.centurylinklabs.watchtower.enable='false' \
   linuxserver/mariadb

@@ -11,8 +11,8 @@ docker rm -f -v $NAME
 # Pass '--dry-run' parameter to see what would be removed
 
 # Set any default parameters we want to pass togarbage collection
-PARAMS=(-e EXCLUDE_FROM_GC=/config/exclude_imgs_from_gc \
-        -v /storage/Docker/docker-garbage-collector/exclude_imgs_from_gc:/config/exclude_imgs_from_gc \
+PARAMS=(-e EXCLUDE_FROM_GC=/etc/docker-gc-exclude \
+        -v /storage/Docker/docker-gc/data/docker-gc-exclude.txt:/etc/docker-gc-exclude \
         -e GRACE_PERIOD_SECONDS=86400)
 
 if [[ "$1" == "--dry-run" ]]; then

@@ -10,7 +10,7 @@ while read line; do
 done < $CONF_DIR/telegraf.conf
 #echo ${secrets[HOST]}
 
-NAME="dockprom_telegraf"
+NAME="telegraf"
 
 docker stop $NAME
 docker rm -f -v $NAME
@@ -22,14 +22,14 @@ docker run -d \
   --name="$NAME" \
   --add-host="influxdb:${secrets[HOST]}" \
   --hostname=crush \
-  -v /storage/Docker/dockprom_telegraf/config/telegraf.conf:/etc/telegraf/telegraf.conf:ro \
-  -v /storage/Docker/dockprom_telegraf/execs/crush-temp-cpu:/usr/local/bin/crush-temp-cpu \
+  -v /storage/Docker/telegraf/data/config/telegraf.conf:/etc/telegraf/telegraf.conf:ro \
+  -v /storage/Docker/telegraf/data/execs/crush-temp-cpu:/usr/local/bin/crush-temp-cpu \
+  -v /storage/Docker/telegraf/data/mibs:/root/.snmp/mibs:ro \
   -v /var/run/docker.sock:/var/run/docker.sock:ro \
   -v /:/rootfs:ro \
   -v /sys:/rootfs/sys:ro \
   -v /proc:/rootfs/proc:ro \
   -v /etc:/rootfs/etc:ro \
-  -v /storage/Docker/dockprom_telegraf/mibs:/root/.snmp/mibs:ro \
   -p 161:161 \
   -e "HOST_MOUNT_PREFIX=/rootfs" \
   -e "HOST_PROC=/rootfs/proc" \

@@ -8,7 +8,7 @@ while read line; do
   if echo $line | grep -F = &>/dev/null; then
     varname=$(echo "$line" | cut -d '=' -f 1); secrets[$varname]=$(echo "$line" | cut -d '=' -f 2-)
   fi
-done < $CONF_DIR/torr_sonarr.conf
+done < $CONF_DIR/sonarr.conf
 #echo ${secrets[FQDN]}; echo ${secrets[APIKEY]}
 
 FQDN="${secrets[FQDN]}"
@@ -17,7 +17,7 @@ FQDN="${secrets[FQDN]}"
 URL="https://sonarr.$FQDN"
 
 # Or we can use localhost and copy script to the config volume mounted in container then run with:
-# docker exec torr_sonarr /config/torr_sonarr_get_seriesid.sh
+# docker exec sonarr /config/sonarr_get_seriesid.sh
 #URL='http://localhost:8989'
 
 # Get API key from Sonarr
@@ -30,7 +30,7 @@ APIKEY="${secrets[APIKEY]}"
 
 # Pass string as argument to make more automated rather than setting variable below.
 if [[ $# -eq 0 ]] ; then
-  echo "Pass series name as argument e.g. ./torr_sonarr_get_seriesid.sh 'Five Came Back' "
+  echo "Pass series name as argument e.g. ./sonarr_get_seriesid.sh 'Five Came Back' "
   exit 1
 fi
 SERIES=$1

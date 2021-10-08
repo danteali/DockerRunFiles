@@ -3,7 +3,7 @@
 # https://www.robustperception.io/monitoring-directory-sizes-with-the-textfile-collector
 
 # Specify where output file should be saved. This should be where nodeexporter looks for the files.
-OUTPUTFILE=/storage/Docker/dockprom/nodeexporter/textfile_collector/directory_size.prom
+OUTPUTFILE=/storage/Docker/nodeexporter/textfile_collector/directory_size.prom
 
 # Add list of directories to be monitored. 
 DIRECTORIES="/storage/Media/Audio

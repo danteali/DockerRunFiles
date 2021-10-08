@@ -1,5 +1,0 @@
-#!/bin/bash
-
-docker rm -f -v dockprom_influxdb
-docker rm -f -v dockprom_chronograf
-docker rm -f -v dockprom_telegraf

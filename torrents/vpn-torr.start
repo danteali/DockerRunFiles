@@ -14,14 +14,14 @@ while read line; do
   if echo $line | grep -F = &>/dev/null; then
     varname=$(echo "$line" | cut -d '=' -f 1); secrets[$varname]=$(echo "$line" | cut -d '=' -f 2-)
   fi
-done < $CONF_DIR/torr_pia.conf
+done < $CONF_DIR/vpn-torr.conf
 #echo ${secrets[FQDN]}; echo ${secrets[PIA_REGION]}; echo ${secrets[PIA_USERNAME]}; echo ${secrets[PIA_PASSWORD]}
 #echo ${secrets[LL_USERNAME]}; echo ${secrets[LL_PASSWORD]}
 
 FQDN="${secrets[FQDN]}"
 
-docker stop torr_pia > /dev/null 2>&1
-docker rm -f -v torr_pia > /dev/null 2>&1
+docker stop vpn-torr > /dev/null 2>&1
+docker rm -f -v vpn-torr > /dev/null 2>&1
 
 #List of PIA's ovpn files are here: https://github.com/ColinHebert/pia-openvpn/tree/master/pia
 # Use any of these as the REGION below.
@@ -29,7 +29,7 @@ docker rm -f -v torr_pia > /dev/null 2>&1
 # ALSO CHANGE THE COUNTRY CODE IN TORRENT.START SCRIPT!!!
 
 docker run -d \
-  --name=torr_pia \
+  --name=vpn-torr \
   --restart="unless-stopped" \
   --cap-add=NET_ADMIN \
   --device=/dev/net/tun \
@@ -37,7 +37,7 @@ docker run -d \
   -e "REGION=${secrets[PIA_REGION]}" \
   -e "USERNAME=${secrets[PIA_USERNAME]}" \
   -e "PASSWORD=${secrets[PIA_PASSWORD]}" \
-  -v /storage/Docker/torr_pia/PIA_OVPNs/4th_gen_default:/pia \
+  -v /storage/Docker/vpn-torr/PIA_OVPNs/4th_gen_default:/pia \
   `# ------- Traefik Proxy Section -------` \
   --network traefik-proxy \
   -l "traefik.enable=true" \
@@ -84,41 +84,41 @@ docker run -d \
   # others!
       # 4th GEN - OPENVPN CONFIGURATION FILES (DEFAULT)
           # https://www.privateinternetaccess.com/openvpn/openvpn-nextgen.zip
-          # /storage/Docker/torr_pia/PIA_OVPNs/4th_gen_default
+          # /storage/Docker/pia/PIA_OVPNs/4th_gen_default
           # These files connect over UDP port 1198 with AES-128-CBC+SHA1, using the server name to 
           # connect.
       # 4th GEN - OPENVPN CONFIGURATION FILES (IP)
           # https://www.privateinternetaccess.com/openvpn/openvpn-ip-nextgen.zip
-          # /storage/Docker/torr_pia/PIA_OVPNs/4th_gen_ip
+          # /storage/Docker/pia/PIA_OVPNs/4th_gen_ip
           # These files connect over UDP port 1198 with AES-128-CBC+SHA1, and connect via an IP 
           # address instead of the server name.
       # 4th GEN - OPENVPN CONFIGURATION FILES (TCP)
           # https://www.privateinternetaccess.com/openvpn/openvpn-tcp-nextgen.zip
-          # /storage/Docker/torr_pia/PIA_OVPNs/4th_gen_tcp
+          # /storage/Docker/pia/PIA_OVPNs/4th_gen_tcp
           # These files connect over TCP port 502 with AES-128-CBC+SHA1, using the server name to
           # connect.
       # 3rd GEN - OPENVPN CONFIGURATION FILES (DEFAULT)
           # https://www.privateinternetaccess.com/openvpn/openvpn.zip
-          # /storage/Docker/torr_pia/PIA_OVPNs/3th_gen_default
+          # /storage/Docker/pia/PIA_OVPNs/3th_gen_default
           # These files connect over UDP port 1198 with AES-128-CBC+SHA1, using the server name to
           # connect.
       # 3rd GEN - OPENVPN CONFIGURATION FILES (IP)
           # https://www.privateinternetaccess.com/openvpn/openvpn-ip.zip
-          # /storage/Docker/torr_pia/PIA_OVPNs/3th_gen_ip
+          # /storage/Docker/pia/PIA_OVPNs/3th_gen_ip
           # These files connect over UDP port 1198 with AES-128-CBC+SHA1, and connect via an IP
           # address instead of the server name.
       # 3rd GEN - OPENVPN CONFIGURATION FILES (TCP) 
           # https://www.privateinternetaccess.com/openvpn/openvpn-tcp.zip
-          # /storage/Docker/torr_pia/PIA_OVPNs/3th_gen_tcp
+          # /storage/Docker/pia/PIA_OVPNs/3th_gen_tcp
           # These files connect over TCP port 502 with AES-128-CBC+SHA1, using the server name to
           # connect.
   # Container mountpoints for OVPNs:
       # act28/pia-openvpn
-          # -v /storage/Docker/torr_pia/PIA_OVPNs/4th_gen_default:/pia
+          # -v /storage/Docker/pia/PIA_OVPNs/4th_gen_default:/pia
               # Oct 2020: Using this works for connecting to Romania using this container and
               # 4th gen default ovpns!
       # colinhebert/pia-openvpn
-          # -v /storage/Docker/torr_pia/PIA_OVPNs/3th_gen_default:/pia
+          # -v /storage/Docker/pia/PIA_OVPNs/3th_gen_default:/pia
               # Oct 2020: Didn't work. Got error: 
                   # docker: Error response from daemon: oci runtime error: container_linux.go:247:
                   # starting container process caused "process_linux.go:245: running exec setns
@@ -191,12 +191,12 @@ echo
 
 if [[ $1 != "--nochecks" ]]; then
   isp_ip=`curl -s ipinfo.io | grep -e ip | tr -d '\n\r ,"ip:'`
-  IPCHECK="/home/ryan/scripts/docker/torrents/torr_pia.ipcheck"
+  IPCHECK="/home/ryan/scripts/docker/torrents/ipcheck_vpn.log"
   VPNCONNECTED=0
 
   while [[ $VPNCONNECTED == 0 ]]
   do
-    docker run --rm --net=container:torr_pia appropriate/curl curl -s ipinfo.io > $IPCHECK
+    docker run --rm --net=container:vpn-torr appropriate/curl curl -s ipinfo.io > $IPCHECK
     PIAIP=`cat $IPCHECK | grep -e \"ip | tr -d '\n\r ,"ip:'`
     PIACO=`cat $IPCHECK | grep -e country | tr -d '", ' | sed 's/country://'`
 
@@ -218,7 +218,8 @@ if [[ $1 != "--nochecks" ]]; then
     if [[ $VPNCOUNT == 10 ]]; then
       echo "${red}VPN not connected, exiting startup script."
       echo "Killing PIA container...${reset}"
-      docker rm -f -v torr_pia
+      docker stop vpn-torr
+      docker rm -f -v vpn-torr
       exit 1
     fi
   done

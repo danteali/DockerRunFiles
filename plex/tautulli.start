@@ -33,8 +33,8 @@ docker rm -f -v $NAME
 docker create \
   --name=$NAME \
   --restart="unless-stopped" \
-  -v /storage/Docker/tautulli:/config \
-  -v /storage/Docker/plex/Library/Application\ Support/Plex\ Media\ Server/Logs:/logs:ro \
+  -v /storage/Docker/tautulli/data:/config \
+  -v /var/log/docker/plex:/logs:ro \
   -e PGID=1000 -e PUID=1000 \
   -e TZ="Europe/London" \
   -p 8181:8181 \

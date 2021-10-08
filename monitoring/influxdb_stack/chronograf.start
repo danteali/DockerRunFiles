@@ -11,7 +11,7 @@ done < $CONF_DIR/chronograf.conf
 #echo ${secrets[FQDN]}; echo ${secrets[USERNAME]}; echo ${secrets[PASSWORD]}
 
 FQDN="${secrets[FQDN]}"
-NAME="dockprom_chronograf"
+NAME="chronograf"
 
 docker stop $NAME
 docker rm -f -v $NAME
@@ -23,15 +23,15 @@ docker create \
   -l org.label-schema.group="monitoring" \
   --name $NAME \
   -p 18888:8888 \
-  -v /storage/Docker/dockprom_chronograf/data:/var/lib/chronograf \
+  -v /storage/Docker/chronograf/data:/var/lib/chronograf \
   `# ------- Traefik Proxy Section -------` \
   -l "traefik.enable=true" \
   -l "traefik.dashboard.port=8888" \
-  -l "traefik.dashboard.frontend.rule=Host:chronograf.$FQDN" \
+  -l "traefik.dashboard.frontend.rule=Host:$NAME.$FQDN" \
   -l "traefik.frontend.auth.basic.users=${secrets[USERNAME]}:${secrets[PASSWORD]}" \
   `# -------------------------------------` \
-  chronograf --influxdb-url=http://dockprom_influxdb:8086
+  chronograf --influxdb-url=http://influxdb:8086
 
-docker network connect traefik-proxy dockprom_chronograf
-docker start dockprom_chronograf
+docker network connect traefik-proxy $NAME
+docker start $NAME
 

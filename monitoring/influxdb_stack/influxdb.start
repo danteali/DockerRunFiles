@@ -1,6 +1,6 @@
 #!/bin/bash
 
-NAME="dockprom_influxdb"
+NAME="influxdb"
 
 docker stop $NAME
 docker rm -f -v $NAME
@@ -11,7 +11,7 @@ docker run -d \
   -l org.label-schema.group="monitoring" \
   --name="$NAME" \
   -p 8086:8086 \
-  -v /storage/Docker/dockprom_influxdb/data:/var/lib/influxdb \
-  -v /storage/Docker/dockprom_influxdb/config/influxdb.conf:/etc/influxdb/influxdb.conf:ro \
+  -v /storage/Docker/influxdb/data/data:/var/lib/influxdb \
+  -v /storage/Docker/influxdb/data/config/influxdb.conf:/etc/influxdb/influxdb.conf:ro \
   influxdb:1.5 -config /etc/influxdb/influxdb.conf
 
