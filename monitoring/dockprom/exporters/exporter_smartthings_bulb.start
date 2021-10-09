@@ -10,7 +10,7 @@ while read line; do
 done < $CONF_DIR/exporters.conf
 #echo ${secrets[SMARTTHINGS_BULB_API]}
 
-NAME="dockprom-smartthingsbulb-exporter"
+NAME="prometheus-smartthingsbulb"
 
 docker stop $NAME
 docker rm -f -v $NAME

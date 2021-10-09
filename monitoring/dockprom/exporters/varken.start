@@ -1,6 +1,6 @@
 #!/bin/bash
 
-NAME="dockprom-plex-exporter"
+NAME="varken"
 
 docker stop $NAME
 docker rm -f -v $NAME

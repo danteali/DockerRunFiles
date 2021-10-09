@@ -12,7 +12,7 @@ done < $CONF_DIR/exporters.conf
 #echo ${secrets[INFLUX_PORT]}; echo ${secrets[INFLUX_DATABASE]}
 #echo ${secrets[PIHOLE_API]}
 
-NAME="dockprom-pihole-exporter"
+NAME="influxdb-pihole"
 
 docker stop $NAME
 docker rm -f -v $NAME

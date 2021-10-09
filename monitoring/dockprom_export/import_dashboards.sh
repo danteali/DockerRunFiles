@@ -26,7 +26,8 @@ done < $CONF_DIR/exporter.conf
 
 ## Variables
 SCRIPT_DIR=$(dirname "$0")
-DIR_DATA=$SCRIPT_DIR/grafana_exports/alert-notifications
+DIR_DATA=$SCRIPT_DIR/grafana_exports/dashboards
+#DIR_DATA=$SCRIPT_DIR/grafana_exports/dashboards_raw
 USERNAME="${secrets[USERNAME]}"
 PASSWORD="${secrets[PASSWORD]}"
 IP="${secrets[IP]}"

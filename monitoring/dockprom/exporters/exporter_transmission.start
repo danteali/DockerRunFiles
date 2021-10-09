@@ -11,7 +11,7 @@ done < $CONF_DIR/exporters.conf
 #echo ${secrets[TRANS_USERNAME]}; echo ${secrets[TRANS_PASSWORD]}
 
 
-NAME="dockprom-transmission-exporter"
+NAME="prometheus-transmission"
 
 docker stop $NAME
 docker rm -f -v $NAME

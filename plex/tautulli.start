@@ -34,6 +34,7 @@ docker create \
   --name=$NAME \
   --restart="unless-stopped" \
   -v /storage/Docker/tautulli/data:/config \
+  -v /var/log/docker/tautulli:/config/logs \
   -v /var/log/docker/plex:/logs:ro \
   -e PGID=1000 -e PUID=1000 \
   -e TZ="Europe/London" \

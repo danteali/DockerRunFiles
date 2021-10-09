@@ -55,7 +55,7 @@ docker create \
   `#-e PUID=0 -e PGID=0` \
   -e PUID=911 -e PGID=911 \
   -e TZ='Europe/London' \
-  -v /storage/Docker/UNMS/config:/config \
+  -v /storage/Docker/UNMS/data:/config \
   --log-driver json-file \
   --log-opt max-size=20m \
   --log-opt max-file=10 \

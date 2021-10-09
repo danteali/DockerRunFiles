@@ -58,6 +58,7 @@ docker create \
   `# -------------------------------------` \
   -l com.centurylinklabs.watchtower.enable=false \
   traefik:1.7.8 #--loglevel=debug
+  #traefik:v1.7 #--loglevel=debug
   #containous/traefik:latest --log.loglevel=debug
 
 
