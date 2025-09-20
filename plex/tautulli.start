@@ -1,0 +1,55 @@
+#!/bin/bash
+
+# Update GitHub with any changes to Docker scripts (timeout to default No after 10s).
+read -r -n 10 -t 3 -p "`echo -e $'\e[0;35m'`Do you wish to update git repo for docker run scripts? [y/N] `echo -e $'\n\e[1;35m'`(Script will continue without updating repo if no response in 10s)`echo -e $'\e[0m'`" response
+response=${response:-No}    # Default response
+if [[ "$response" =~ ^([yY][eE][sS]|[yY])+$ ]]; then
+    /home/ryan/scripts/docker/_update_git.sh
+fi
+echo
+
+# Get sensitive info from .conf file
+CONF_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+typeset -A secrets    # Define array to hold variables 
+while read line; do
+  if echo $line | grep -F = &>/dev/null; then
+    varname=$(echo "$line" | cut -d '=' -f 1); secrets[$varname]=$(echo "$line" | cut -d '=' -f 2-)
+  fi
+done < $CONF_DIR/tautulli.conf
+#echo ${secrets[FQDN]}
+
+FQDN="${secrets[FQDN]}"
+NAME=tautulli
+
+docker stop $NAME
+docker rm -f -v $NAME
+
+# Create container, then add to traefik-proxy network, then start it to make sure it has access to it's 'normal' network
+# We use 'docker create' to create the container, then 'docker network connect' to add the container to traefik-proxy,
+# then 'docker start' to startup the container.
+# Also '-d' not needed with 'docker create' since 'docker start' sutomatically starts in detached mode.
+
+#docker run -d \
+docker create \
+  --name=$NAME \
+  --restart="unless-stopped" \
+  -v /storage/Docker/tautulli/data:/config \
+  -v /var/log/docker/tautulli:/config/logs \
+  -v /var/log/docker/plex:/logs:ro \
+  -e PGID=1000 -e PUID=1000 \
+  -e TZ="Europe/London" \
+  -p 8181:8181 \
+    `# ------- Traefik Proxy Section -------` \
+  `#--network traefik-proxy` \
+  -l "traefik.enable=true" \
+  -l "traefik.port=8181" \
+  -l "traefik.frontend.rule=Host:$NAME.$FQDN" \
+  `# -------------------------------------` \
+  linuxserver/tautulli
+
+# Add to traefik-proxy network so it can reach the other container
+docker network connect bridge $NAME
+docker network connect traefik-proxy $NAME
+
+# Start container
+docker start $NAME

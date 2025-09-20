@@ -1,0 +1,59 @@
+#!/bin/bash
+
+# Onlyoffice integrates with Nextcloud to allow editing of office docs in the webinterface
+
+# Update GitHub with any changes to Docker scripts (timeout to default No after 5s).
+read -r -n 10 -t 5 -p "`echo -e $'\e[0;35m'`Do you wish to update git repo for docker run scripts? [y/N] `echo -e $'\n\e[1;35m'`(Script will continue without updating repo if no response in 5s)`echo -e $'\e[0m'`" response
+response=${response:-No}    # Default response
+if [[ "$response" =~ ^([yY][eE][sS]|[yY])+$ ]]; then
+    /home/ryan/scripts/docker/_update_git.sh
+fi
+echo
+
+# Get sensitive info from .conf file
+CONF_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+typeset -A secrets    # Define array to hold variables 
+while read line; do
+  if echo $line | grep -F = &>/dev/null; then
+    varname=$(echo "$line" | cut -d '=' -f 1); secrets[$varname]=$(echo "$line" | cut -d '=' -f 2-)
+  fi
+done < $CONF_DIR/onlyoffice.conf
+#echo ${secrets[FQDN]}
+
+NAME="onlyoffice"
+SUBDOMAIN=$NAME
+FQDN="${secrets[FQDN]}"
+
+docker stop $NAME
+docker rm -f -v $NAME
+
+#docker run -d \
+docker create \
+  --name=$NAME \
+  --restart="unless-stopped" \
+  -p 8880:80 \
+  -v /storage/Docker/onlyoffice/data/local.json:/etc/onlyoffice/documentserver/local.json \
+  `# ------- Traefik Proxy Section -------` \
+  -l "traefik.enable=true" \
+  -l "traefik.frontend.rule=Host:$SUBDOMAIN.$FQDN" \
+  -l "traefik.port=80" \
+  -l "traefik.frontend.passHostHeader=true" \
+  `# -------------------------------------` \
+  onlyoffice/documentserver:5.4.2.46
+
+
+# Sticking with v 5.4.2.46 since...
+# Only Office revoked the ability to edit docs for some reason.
+# Can use this instead: https://github.com/Zegorax/OnlyOffice-Unlimited
+# Also see here for more info: https://www.reddit.com/r/selfhosted/comments/fpurk6/stop_recommending_onlyoffice/
+# And OO issue here: https://github.com/ONLYOFFICE/DocumentServer/issues/805
+
+# Or move to Collabora
+
+
+# Add to traefik-proxy network so it can reach the other container - '--link' options above doesn't seem to work proerly if we try to add straight to traefik-proxy above.
+docker network connect bridge $NAME
+docker network connect traefik-proxy $NAME
+
+# Start container
+docker start $NAME

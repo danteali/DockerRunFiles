@@ -1,0 +1,35 @@
+#!/bin/bash
+
+# Note: we can stop watchtower updating an images by adding this label to the container run command:
+#-l com.centurylinklabs.watchtower.enable=false \
+
+# Update GitHub with any changes to Docker scripts (timeout to default No after 5s).
+read -r -n 10 -t 5 -p "`echo -e $'\e[0;35m'`Do you wish to update git repo for docker run scripts? [y/N] `echo -e $'\n\e[1;35m'`(Script will continue without updating repo if no response in 5s)`echo -e $'\e[0m'`" response
+response=${response:-No}    # Default response
+if [[ "$response" =~ ^([yY][eE][sS]|[yY])+$ ]]; then
+    /home/ryan/scripts/docker/_update_git.sh
+fi
+echo
+
+# Get sensitive info from .conf file
+CONF_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+typeset -A secrets    # Define array to hold variables 
+while read line; do
+  if echo $line | grep -F = &>/dev/null; then
+    varname=$(echo "$line" | cut -d '=' -f 1); secrets[$varname]=$(echo "$line" | cut -d '=' -f 2-)
+  fi
+done < $CONF_DIR/watchtower.conf
+#echo ${secrets[SLACK_WEBHOOK]}
+
+docker rm -f -v watchtower
+
+docker run -d \
+  --restart="unless-stopped" \
+  --name watchtower \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -e WATCHTOWER_NOTIFICATIONS=slack \
+  -e WATCHTOWER_NOTIFICATION_SLACK_HOOK_URL="${secrets[SLACK_WEBHOOK]}" \
+  containrrr/watchtower --schedule "0 0 4 * * *" --cleanup
+  #containrrr/watchtower --debug
+  #v2tec/watchtower:latest --interval 43200
+

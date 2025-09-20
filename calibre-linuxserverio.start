@@ -1,0 +1,82 @@
+#!/bin/bash
+
+# Update GitHub with any changes to Docker scripts.
+read -r -n 10 -t 5 -p "`echo -e $'\e[0;35m'`Do you wish to update git repo for docker run scripts? [y/N] `echo -e $'\n\e[1;35m'`(Script will continue without updating repo if no response in 5s)`echo -e $'\e[0m'`" response
+response=${response:-No}    # Default response
+if [[ "$response" =~ ^([yY][eE][sS]|[yY])+$ ]]; then
+    /home/ryan/scripts/docker/_update_git.sh
+fi
+echo
+
+# Get sensitive info from .conf file
+CONF_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+typeset -A secrets    # Define array to hold variables 
+while read line; do
+  if echo $line | grep -F = &>/dev/null; then
+    varname=$(echo "$line" | cut -d '=' -f 1); secrets[$varname]=$(echo "$line" | cut -d '=' -f 2-)
+  fi
+done < $CONF_DIR/calibre.conf
+#echo ${secrets[FQDN]}; echo ${secrets[GUAC_USER]}; echo ${secrets[GUAC_PASS]}
+
+
+NAME="calibre"
+SUBDOMAIN_GUAC="calibre"
+#SUBDOMAIN_WEB="calibre-gui"
+FQDN="${secrets[FQDN]}"
+
+docker stop $NAME
+docker rm -f -v $NAME
+
+# Create container, then add to traefik-proxy network, then start it to make sure it has access to it's 'normal' network
+# We use 'docker create' to create the container, then 'docker network connect' to add the container to traefik-proxy,
+# then 'docker start' to startup the container.
+# Also '-d' not needed with 'docker create' since 'docker start' sutomatically starts in detached mode.
+
+#docker run -d \
+docker create \
+  --name=$NAME \
+  --restart="unless-stopped" \
+  -e PUID=1000 -e PGID=1000 \
+  -e TZ=Europe/London \
+  -e GUAC_USER="${secrets[GUAC_USER]}" \
+  -e GUAC_PASS="${secrets[GUAC_PASS]}" \
+  -p 9080:8080 \
+  `#-p 9081:8081` \
+  -v /storage/Docker/calibre-linuxserverio/config:/config \
+  -v /storage/Media/Books/calibre_library:/library \
+  `# ------- Traefik Proxy Section -------` \
+  `#--network traefik-proxy` \
+  -l "traefik.enable=true" \
+  -l "traefik.guac.frontend.rule=Host:$SUBDOMAIN_GUAC.$FQDN" \
+  -l "traefik.guac.port=8080" \
+  `#-l "traefik.web.frontend.rule=Host:$SUBDOMAIN_WEB.$FQDN"` \
+  `#-l "traefik.web.port=8081"` \
+  `# -------------------------------------` \
+  linuxserver/calibre
+
+
+
+# Add to bridge & traefik-proxy network so it can reach the other container
+docker network connect bridge $NAME
+docker network connect traefik-proxy $NAME
+
+# Start container
+docker start $NAME
+
+# linuxserver.io image
+#docker create \
+#  --name=$NAME \
+#  --restart="unless-stopped" \
+#  -v /storage/Media/Books/calibre_library:/books \
+#  -v /storage/Docker/calibre-web-lsio/config:/config \
+#  -e PGID=0 -e PUID=0 \
+#  -p 7083:8083 \
+#  `# ------- Traefik Proxy Section -------` \
+#  --network traefik-proxy \
+#  -l "traefik.enable=true" \
+#  -l "traefik.frontend.rule=Host:$SUBDOMAIN.$FQDN" \
+#  -l "traefik.port=8083" \
+#  `# -------------------------------------` \
+#  linuxserver/calibre-web
+
+

@@ -1,0 +1,259 @@
+
+
+# Log level
+# Accepted values, in order of severity: "DEBUG", "INFO", "WARN", "ERROR", "FATAL", "PANIC"
+# Messages at and above the selected level will be logged.
+# Default: "ERROR"
+#  logLevel = "DEBUG"
+
+# Send OBFUSCATED anonymous usage data (Optional) [Default: false]
+# https://docs.traefik.io/basics/#collected-data
+  sendAnonymousUsage = true
+
+# Accept backend self-signed 'invalid certs' when proxying to containers.
+  InsecureSkipVerify = true
+
+
+################################################################
+# Entrypoints configuration
+# https://docs.traefik.io/configuration/entrypoints/
+################################################################
+
+defaultEntryPoints = ["http", "https"]
+
+[entryPoints]
+  [entryPoints.http]
+    address = ":80"
+    [entryPoints.http.redirect]
+      entryPoint = "https"
+
+  [entryPoints.https]
+    address = ":443"
+    [entryPoints.https.tls]
+      [[entryPoints.https.tls.certificates]]
+      certFile = "/etc/traefik/certs/<your_domain>/cert.pem"
+      keyFile = "/etc/traefik/certs/<your_domain>/privkey.pem"
+
+  [entryPoints.traefik]
+    address = ":9999"
+    [entryPoints.traefik.auth]
+      [entryPoints.traefik.auth.basic]
+        users = ["<basic_auth_username>:<basic_auth_password_hashed_with_htpasswd>"]
+        #usersFile = "/etc/traefik/htpasswds/htpasswd_traefikdash"
+
+  [entryPoints.metrics]
+    address = ":9998"
+
+# Enable retry sending request if network error
+[retry]
+
+
+################################################################
+# Enable ACME (Let's Encrypt): automatic SSL.
+# https://docs.traefik.io/configuration/acme/
+################################################################
+[acme]
+# Email address used for registration. (Required)
+  email = "<your_email>"
+
+# File or key used for certificates storage. (Required)
+  storage = "/etc/traefik/acme.json"
+
+# Entrypoint to proxy acme apply certificates to. (Required)
+  entryPoint = "https"
+
+# If true, display debug log messages from the acme client library. (Optional)
+# Default: false
+  acmeLogging = true
+
+# Enable certificate generation on frontends host rules.
+# Default: false
+  onHostRule = true
+
+# CA server to use. Uncomment the line to use Let's Encrypt's staging server, leave commented to go to prod.
+# Default: "https://acme-v02.api.letsencrypt.org/directory"
+  #caServer = "https://acme-staging-v02.api.letsencrypt.org/directory"
+
+# Use a TLS-ALPN-01 ACME challenge.
+# Optional (but recommended)
+  #[acme.tlsChallenge]
+
+# Use a HTTP-01 ACME challenge.
+# Optional
+  [acme.httpChallenge]
+  # EntryPoint to use for the HTTP-01 challenges. (Required)
+  entryPoint = "http"
+
+
+
+# Domains list.
+# Only domains defined here can generate wildcard certificates.
+# The certificates for these domains are negotiated at traefik startup only.
+#
+# [[acme.domains]]
+#   main = "local1.com"
+#   sans = ["test1.local1.com", "test2.local1.com"]
+# [[acme.domains]]
+#   main = "local2.com"
+# [[acme.domains]]
+#   main = "*.local3.com"
+#   sans = ["local3.com", "test1.test1.local3.com"]
+
+
+
+################################################################
+# API definition
+# https://docs.traefik.io/configuration/api/
+################################################################
+# Warning: Enabling API will expose Traefik's configuration.
+# It is not recommended in production,
+# unless secured by authentication and authorizations
+[api]
+  # Name of the related entry point
+    entryPoint = "traefik"
+
+  # Enable Dashboard
+    dashboard = true
+
+
+################################################################
+# Metrics
+# https://docs.traefik.io/configuration/metrics/
+################################################################
+# Metrics definition
+[metrics]
+
+  # To enable Traefik to export internal metrics to Prometheus
+  [metrics.prometheus]
+    # Name of the related entry point (Optional) [Default: "traefik"]
+    entryPoint = "metrics"
+    # Buckets for latency metrics (Optional) [ Default: [0.1, 0.3, 1.2, 5] ]
+    buckets = [0.1,0.3,1.2,5.0]
+
+  # InfluxDB metrics exporter type
+  #[metrics.influxdb]
+    # InfluxDB's address. (Required) [Default: "localhost:8089"]
+    #address = "localhost:8089"
+    # InfluxDB's address protocol (udp or http) (Required) [Default: "udp"]
+    #protocol = "udp"
+    # InfluxDB push interval (Optional) [Default: "10s"]
+    #pushinterval = "10s"
+    # InfluxDB database used when protocol is http (Optional) [Default: ""]
+    #database = ""
+    # InfluxDB retention policy used when protocol is http (Optional) [Default: ""]
+    #retentionpolicy = ""
+
+
+
+################################################################
+# Docker configuration backend
+# https://docs.traefik.io/configuration/backends/docker/
+################################################################
+# Enable Docker configuration backend
+# Enable Docker Provider.
+################################################################
+[docker]
+
+  # Docker server endpoint. Can be a tcp or a unix socket endpoint. (Required)
+  endpoint = "unix:///var/run/docker.sock"
+
+  # Default base domain used for the frontend rules. (Optional)
+  # Can be overridden by setting the "traefik.domain" label on a container.
+  domain = "<your_domain_name e.g. jbloggs.com>"
+
+  # Enable watch docker changes.
+  watch = true
+
+  # Expose containers by default in Traefik.
+  # If set to false, containers that don't have `traefik.enable=true` will be ignored.
+  exposedByDefault = false
+
+  # Define a default docker network to use for connections to all containers.
+  # Can be overridden by the traefik.docker.network label.
+  network = "traefik-proxy"
+
+
+################################################################
+# Non-Docker 'File' Backends
+# https://docs.traefik.io/configuration/backends/file/
+################################################################
+[file]
+  # We can specify 'file' backends for non-docker services in a separate rules.toml file if preferred
+  # or otherwise detail it below in the [backends] and [frontends] sections.
+  #watch = true
+  #filename = "/etc/traefik/rules.toml"
+
+[backends]
+  [backends.webmin]
+    [backends.webmin.servers]
+      [backends.webmin.servers.server1]
+      url = "https://<host_IP>:<port>/"
+
+  [backends.pihole]
+    [backends.pihole.servers]
+      [backends.pihole.servers.server1]
+      url = "http://<host_IP>:<port>/admin/"
+
+  [backends.unms]
+    [backends.unms.servers]
+      [backends.unms.servers.server1]
+      url = "https://<host_IP>:<port>/"
+
+[frontends]
+  [frontends.webmin]
+  backend = "webmin"
+  passHostHeader = true
+    [frontends.webmin.routes]
+      [frontends.webmin.routes.route1]
+      rule = "Host:webmin.<your_domain>"
+
+  [frontends.pihole]
+  backend = "pihole"
+  passHostHeader = true
+    [frontends.pihole.routes]
+      [frontends.pihole.routes.route1]
+      rule = "Host:pihole.<your_domain>"
+    [frontends.pihole.auth.basic]
+      removeHeader = true
+      users = ["<basic_auth_username>:<basic_auth_password_hashed_with_htpasswd>"]
+
+  [frontends.unms]
+  backend = "unms"
+  passHostHeader = true
+    [frontends.unms.routes]
+      [frontends.unms.routes.route1]
+      rule = "Host:unms.<your_domain>"
+
+
+
+
+
+
+################################################################
+# Ping
+# https://docs.traefik.io/configuration/ping/
+################################################################
+# A simple endpoint to check for Traefik process liveness. Return a code 200 with the content: OK
+# See this for help if entry point doesn't work: https://docs.traefik.io/configuration/backends/web/#deprecation-compatibility
+[ping]
+  # Name of the related entry point (Optional) [Default: "traefik"]
+  entryPoint = "traefik"
+
+
+
+################################################################
+# Logging
+# https://docs.traefik.io/configuration/logs/
+################################################################
+logLevel = "INFO"
+
+# Lots of configuration options also available - e.g. filters
+[traefikLog]
+  filePath = "/var/log/traefik/traefik.log"
+
+# Lots of configuration options also available - e.g. filters, response codes
+[accessLog]
+  filePath = "/var/log/traefik/access.log"
+  
+  [accessLog.filters]
+    statusCodes = ["200", "300-302", "400-499"]

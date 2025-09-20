@@ -1,0 +1,226 @@
+#!/bin/bash
+
+blue=`tput setaf 4`
+red=`tput setaf 1`
+green=`tput setaf 2`
+yellow=`tput setaf 3`
+txtund=`tput sgr 0 1`          # Underline
+reset=`tput sgr0`
+
+# Get sensitive info from .conf file
+CONF_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+typeset -A secrets    # Define array to hold variables 
+while read line; do
+  if echo $line | grep -F = &>/dev/null; then
+    varname=$(echo "$line" | cut -d '=' -f 1); secrets[$varname]=$(echo "$line" | cut -d '=' -f 2-)
+  fi
+done < $CONF_DIR/vpn-torr.conf
+#echo ${secrets[FQDN]}; echo ${secrets[PIA_REGION]}; echo ${secrets[PIA_USERNAME]}; echo ${secrets[PIA_PASSWORD]}
+#echo ${secrets[LL_USERNAME]}; echo ${secrets[LL_PASSWORD]}
+
+FQDN="${secrets[FQDN]}"
+
+docker stop vpn-torr > /dev/null 2>&1
+docker rm -f -v vpn-torr > /dev/null 2>&1
+
+#List of PIA's ovpn files are here: https://github.com/ColinHebert/pia-openvpn/tree/master/pia
+# Use any of these as the REGION below.
+# If REGION changed, remember to change the country code which is checked below (~ line 57)
+# ALSO CHANGE THE COUNTRY CODE IN TORRENT.START SCRIPT!!!
+
+docker run -d \
+  --name=vpn-torr \
+  --restart="unless-stopped" \
+  --cap-add=NET_ADMIN \
+  --device=/dev/net/tun \
+  --dns 209.222.18.222 --dns 209.222.18.218 \
+  -e "REGION=${secrets[PIA_REGION]}" \
+  -e "USERNAME=${secrets[PIA_USERNAME]}" \
+  -e "PASSWORD=${secrets[PIA_PASSWORD]}" \
+  -v /storage/Docker/vpn-torr/PIA_OVPNs/4th_gen_default:/pia \
+  `# ------- Traefik Proxy Section -------` \
+  --network traefik-proxy \
+  -l "traefik.enable=true" \
+  -l "traefik.transmission.port=9091" \
+  -l "traefik.transmission.frontend.rule=Host:transmission.$FQDN" \
+  -l "traefik.sonarr.port=8989" \
+  -l "traefik.sonarr.frontend.rule=Host:sonarr.$FQDN" \
+  -l "traefik.radarr.port=7878" \
+  -l "traefik.radarr.frontend.rule=Host:radarr.$FQDN" \
+  -l "traefik.bazarr.port=6767" \
+  -l "traefik.bazarr.frontend.rule=Host:bazarr.$FQDN" \
+  -l "traefik.jackett.port=9117" \
+  -l "traefik.jackett.frontend.rule=Host:jackett.$FQDN" \
+  `#-l "traefik.lazylibrarian.port=5299"` \
+  `#-l "traefik.lazylibrarian.frontend.rule=Host:lazylibrarian.$FQDN"` \
+  `#-l "traefik.lazylibrarian.frontend.auth.basic.users=${secrets[LL_USERNAME]}:${secrets[LL_PASSWORD]}"` \
+  `# Ubuntu only needed to access Jackett with nginx proxy, not needed since Jackett accessible directly through traefik` \
+  `#-l "traefik.ubuntu.port=80"` \
+  `#-l "traefik.ubuntu.frontend.rule=Host:ubuntu.$FQDN"` \
+  `# -------------------------------------` \
+  act28/pia-openvpn
+  #act28/pia-openvpn
+  #itsdaspecialk/pia-openvpn
+  #colinhebert/pia-openvpn
+
+  #https://hub.docker.com/r/qmcgaw/gluetun - will require whole new config
+  
+  # I believe things keep breaking due to PIA updating the endpoints and the containers not being 
+  # updated to include the new OVPN files.
+  # We can download these ourselves and mount a volume for the container to read so that it uses the
+  # freshly downloaded OVPN files. Although need to find the correct container directory where they
+  # are stored.
+  # OVPNs are from links in here: 
+      # https://www.privateinternetaccess.com/helpdesk/kb/articles/where-can-i-find-your-ovpn-files
+  # OVPNs can be downloaded using these commands:
+      # cd <local storage dir>
+      # wget <PIA zip URL>
+      # unzip <PIA zip>
+  # As of Oct 202 there are multiple sets of PIA OVPNs available. Note that the 4th generation
+  # files use the new PIA servers (ro.privacy.network:1198) and 3rd generation use the old servers
+  # (de-berlin.privateinternetaccess.com). May not be important but all the containers with errors
+  # seem to be trying to connect to the old servers but this may be coincidental.
+  # Downloaded all of the ones below but the 4th gen defaults worked on forst go so didn't try the
+  # others!
+      # 4th GEN - OPENVPN CONFIGURATION FILES (DEFAULT)
+          # https://www.privateinternetaccess.com/openvpn/openvpn-nextgen.zip
+          # /storage/Docker/pia/PIA_OVPNs/4th_gen_default
+          # These files connect over UDP port 1198 with AES-128-CBC+SHA1, using the server name to 
+          # connect.
+      # 4th GEN - OPENVPN CONFIGURATION FILES (IP)
+          # https://www.privateinternetaccess.com/openvpn/openvpn-ip-nextgen.zip
+          # /storage/Docker/pia/PIA_OVPNs/4th_gen_ip
+          # These files connect over UDP port 1198 with AES-128-CBC+SHA1, and connect via an IP 
+          # address instead of the server name.
+      # 4th GEN - OPENVPN CONFIGURATION FILES (TCP)
+          # https://www.privateinternetaccess.com/openvpn/openvpn-tcp-nextgen.zip
+          # /storage/Docker/pia/PIA_OVPNs/4th_gen_tcp
+          # These files connect over TCP port 502 with AES-128-CBC+SHA1, using the server name to
+          # connect.
+      # 3rd GEN - OPENVPN CONFIGURATION FILES (DEFAULT)
+          # https://www.privateinternetaccess.com/openvpn/openvpn.zip
+          # /storage/Docker/pia/PIA_OVPNs/3th_gen_default
+          # These files connect over UDP port 1198 with AES-128-CBC+SHA1, using the server name to
+          # connect.
+      # 3rd GEN - OPENVPN CONFIGURATION FILES (IP)
+          # https://www.privateinternetaccess.com/openvpn/openvpn-ip.zip
+          # /storage/Docker/pia/PIA_OVPNs/3th_gen_ip
+          # These files connect over UDP port 1198 with AES-128-CBC+SHA1, and connect via an IP
+          # address instead of the server name.
+      # 3rd GEN - OPENVPN CONFIGURATION FILES (TCP) 
+          # https://www.privateinternetaccess.com/openvpn/openvpn-tcp.zip
+          # /storage/Docker/pia/PIA_OVPNs/3th_gen_tcp
+          # These files connect over TCP port 502 with AES-128-CBC+SHA1, using the server name to
+          # connect.
+  # Container mountpoints for OVPNs:
+      # act28/pia-openvpn
+          # -v /storage/Docker/pia/PIA_OVPNs/4th_gen_default:/pia
+              # Oct 2020: Using this works for connecting to Romania using this container and
+              # 4th gen default ovpns!
+      # colinhebert/pia-openvpn
+          # -v /storage/Docker/pia/PIA_OVPNs/3th_gen_default:/pia
+              # Oct 2020: Didn't work. Got error: 
+                  # docker: Error response from daemon: oci runtime error: container_linux.go:247:
+                  # starting container process caused "process_linux.go:245: running exec setns
+                  # process for init caused \"exit status 15\"".
+                # Think this is due to a docker issue exiting last container rather than this actual
+                # container. Will try again in future.
+
+
+  # Alternate containers:
+    # Original container we used: 
+        #colinhebert/pia-openvpn
+        # - Broke Aug 2020: Image not updated in 4 years so think it's using old ovpn files and thowing errors.
+        # - Variables:
+        #     -e "USERNAME=${secrets[PIA_USERNAME]}" \
+    
+    # Based on colinhebert but with updated config from PIA - drop-in replacement:
+        # act28/pia-openvpn
+        # Stopped working intermittently in Oct 2020
+        # - Variables: 
+        #     -e "USERNAME=${secrets[PIA_USERNAME]}" \
+        # Can also use as proxy - local LAN devices can connect to container and use VPN for browsing
+            # Set: -e "LOCAL_NETWORK=192.168.0.0/24" 
+            # And: -p 8118:8118 
+            # On LAN devices set proxy to 192.168.0.10:8118 or use "Proxy SwitchyOmega" extension to
+            # allow browsing via VPN
+
+    # Based on colinhebert but with updated config from PIA - drop-in replacement:
+        # itsdaspecialk/pia-openvpn
+        # - Variables: 
+        #     -e "USERNAME=${secrets[PIA_USERNAME]}" \
+
+    # Confirmed connecting to PIA but trouble acessing torrent containers:
+        # qmcgaw/private-internet-access
+        # - Environment variable "REGION" can only be one of: 
+        #     AU Melbourne, AU Perth, AU Sydney, 
+        #     Austria, Belgium, CA Montreal, CA Toronto, CA Vancouver, Czech Republic, DE Berlin, 
+        #     DE Frankfurt, Denmark, Finlan, France, Hungary, India, Ireland, Israel, Italy, Japan,
+        #     Luxembourg, Mexico, Netherlands, New Zealand, Norway, Poland, Romania, Singapore, Spain,
+        #     Sweden, Switzerland, UAE, UK London, UK Manchester, UK Southampton, US Atlanta,
+        #     US California, US Chicago, US Dallas, US Denver, US East, US Florida, US Houston,
+        #     US Las Vegas, US New York City, US Seattle, US Silicon Valley, US Washington DC, US West
+        # - Variables:
+        #     -e "USER=${secrets[PIA_USERNAME]}" \
+        #     -e "FIREWALL=off" \
+        #     -e "EXTRA_SUBNETS=192.168.0.0/24,192.168.10.0/24,192.168.20.0/24,192.168.30.0/24,172.17.0.0/24,172.18.0.0/24,172.19.0.0/24" \
+    
+    
+    # https://hub.docker.com/r/chuckremes/openvpn-client
+        # Image: chuckremes/openvpn-client
+        # Variables:
+          # -e "OPENVPN_PROVIDER=PIA" \
+          # -e "OPENVPN_CONFIG=N./etherlands" \
+          # -e "OPENVPN_USERNAME=user" \
+          # -e "OPENVPN_PASSWORD=pass" \
+
+
+    # Could just try an OVPN client and use PIA .ovpn config files e.g.
+        # Get up to date PIA ovpn files with: 
+            # wget https://www.privateinternetaccess.com/openvpn/openvpn.zip -O /storage/Docker/ekristen-openvpn-client/openvpn.zip
+            # unzip /storage/Docker/ekristen-openvpn-client/openvpn.zip -d /storage/Docker/ekristen-openvpn-client/config/
+        # Image: ekristen/openvpn-client
+        # Takes normal openvpn client flags after image name e.g. for username/password
+        # Copy auth-user-pass.txt into config folder
+        # Variables:
+          # -v /storage/Docker/ekristen-openvpn-client/config:/vpn \
+          # ekristen/openvpn-client --config /vpn/Romania.conf --auth-user-pass /vpn/auth-user-pass.txt --auth-nocache
+
+
+echo
+
+if [[ $1 != "--nochecks" ]]; then
+  isp_ip=`curl -s ipinfo.io | grep -e ip | tr -d '\n\r ,"ip:'`
+  IPCHECK="/home/ryan/scripts/docker/torrents/ipcheck_vpn.log"
+  VPNCONNECTED=0
+
+  while [[ $VPNCONNECTED == 0 ]]
+  do
+    docker run --rm --net=container:vpn-torr appropriate/curl curl -s ipinfo.io > $IPCHECK
+    PIAIP=`cat $IPCHECK | grep -e \"ip | tr -d '\n\r ,"ip:'`
+    PIACO=`cat $IPCHECK | grep -e country | tr -d '", ' | sed 's/country://'`
+
+    if [[ $PIACO == *"ES"* ]] || [[ $PIACO == *"RO"* ]] || [[ $PIACO == *"TR"* ]] || [[ $PIACO == *"BR"* ]] || [[ $PIACO == *"NO"* ]]; then
+      VPNCONNECTED=1
+      echo ${green}
+      echo "VPN Connected on IP: $PIAIP"
+      echo "VPN Country: $PIACO"
+      echo "Continuing with service startup...${reset}" && echo
+    else
+      VPNCOUNT=$((VPNCOUNT+1))
+      echo "${reset}# of VPN checks: $VPNCOUNT"
+      echo "PIA IP Address: $PIAIP"
+      echo "PIA Country: $PIACO"
+      echo "----------------------------"
+      sleep 5
+    fi
+
+    if [[ $VPNCOUNT == 10 ]]; then
+      echo "${red}VPN not connected, exiting startup script."
+      echo "Killing PIA container...${reset}"
+      docker stop vpn-torr
+      docker rm -f -v vpn-torr
+      exit 1
+    fi
+  done
+fi

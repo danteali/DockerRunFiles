@@ -1,0 +1,54 @@
+#!/bin/bash
+
+# Simple website which shows the IP of visitor. Very useful for testing Traefik configuration etc
+
+# Update GitHub with any changes to Docker scripts (timeout to default No after 10s).
+read -r -n 10 -t 5 -p "`echo -e $'\e[0;35m'`Do you wish to update git repo for docker run scripts? [y/N] `echo -e $'\n\e[1;35m'`(Script will continue without updating repo if no response in 5s)`echo -e $'\e[0m'`" response
+response=${response:-No}    # Default response
+if [[ "$response" =~ ^([yY][eE][sS]|[yY])+$ ]]; then
+    /home/ryan/scripts/docker/_update_git.sh
+fi
+echo
+
+# Get sensitive info from .conf file
+CONF_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+typeset -A secrets    # Define array to hold variables 
+while read line; do
+  if echo $line | grep -F = &>/dev/null; then
+    varname=$(echo "$line" | cut -d '=' -f 1); secrets[$varname]=$(echo "$line" | cut -d '=' -f 2-)
+  fi
+done < $CONF_DIR/dozzle.conf
+#echo ${secrets[FQDN]}; echo ${secrets[USERNAME]}; echo ${secrets[PASSWORD]}
+
+FQDN="${secrets[FQDN]}"
+NAME="dozzle"
+
+docker stop $NAME
+docker rm -f -v $NAME
+
+# Since we can't assign two networks with 'docker run' we need to create the container first,
+# then add to traefik-proxy network and default bridge network before starting it.
+
+#docker run -d \
+docker create \
+  --restart="unless-stopped" \
+  --name=$NAME \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -p 8280:8080 \
+  `# ------- Traefik Proxy Section -------` \
+  --network traefik-proxy \
+  -l "traefik.enable=true" \
+  -l "traefik.port=8080" \
+  -l "traefik.frontend.rule=Host:$NAME.$FQDN" \
+  -l "traefik.frontend.auth.basic.users=${secrets[USERNAME]}:${secrets[PASSWORD]}" \
+  `# -------------------------------------` \
+  amir20/dozzle:latest
+
+# Add to bridge & traefik-proxy network so it can reach the other container
+docker network connect bridge $NAME
+docker network connect traefik-proxy $NAME
+
+# Start container
+docker start $NAME
+
+

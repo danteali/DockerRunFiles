@@ -1,0 +1,119 @@
+#!/bin/bash
+
+# Update GitHub with any changes to Docker scripts.
+/home/ryan/scripts/docker/_update_git.sh
+
+# Get sensitive info from .conf file
+CONF_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+typeset -A secrets    # Define array to hold variables 
+while read line; do
+  if echo $line | grep -F = &>/dev/null; then
+    varname=$(echo "$line" | cut -d '=' -f 1); secrets[$varname]=$(echo "$line" | cut -d '=' -f 2-)
+  fi
+done < $CONF_DIR/guacamole.conf
+#echo ${secrets[FQDN]}; echo ${secrets[GUACD_HOSTNAME]}; echo ${secrets[MYSQL_HOSTNAME]};
+#echo ${secrets[MYSQL_DATABASE]}; echo ${secrets[MYSQL_USER]}; echo ${secrets[MYSQL_PASSWORD]};
+
+SUBDOMAIN="guac"
+FQDN="${secrets[FQDN]}"
+
+docker stop guacamole
+docker stop guacd
+docker stop desktop-vnc
+
+docker rm -f -v guacamole
+docker rm -f -v guacd
+docker rm -f -v desktop-vnc
+
+################################################################################################################################################
+## These commands/notes for reference. They need only be used once when first setting up database. Run manually, not from this script.
+## BEFORE first run...
+################################################################################################################################################
+  # DB name/user/pass: see 'crush' in lastpass
+################################################################################################################################################
+  #Create a mariadb/mysql DB and account for guac to use….
+    #docker exec -it mariadb mysql -uroot -p***********
+      #CREATE DATABASE guacamole;
+      #GRANT SELECT,INSERT,UPDATE,DELETE ON guacamole.* TO 'guacamole'@'%' IDENTIFIED BY '<password>';
+      #FLUSH PRIVILEGES;
+      #Check to make sure DB has been created: SHOW DATABASES;
+      #Check to make sure DB has been created: SHOW GRANTS FOR guac;
+
+  #Start guacamole container to get SQL initialisation script then copy it to where mariadb can see it…
+    #mkdir -p /storage/Docker/guacamole
+    #docker run --rm guacamole/guacamole /opt/guacamole/bin/initdb.sh --mysql > initdb.sql
+    #cp initdb.sql /storage/Docker/mariadb
+  #Start interactive session in mariadb container and run guacamole initdb script against guacamole DB…
+    #docker exec -it mariadb /bin/bash
+    #cat /config/initdb.sql | mysql -uroot -p*********** guacamole
+################################################################################################################################################
+
+## Start container for remote desktop to access from guacamole
+#docker run -d \
+#  --restart="unless-stopped" \
+#  --name desktop-vnc \
+#  -p 127.0.0.1:6080:80 \
+#  dorowu/ubuntu-desktop-lxde-vnc
+
+## Start guacd deamon
+docker run -d \
+  --name guacd \
+  -p 4822:4822 \
+  --restart="unless-stopped" \
+  `#--link desktop-vnc` \
+  guacamole/guacd
+
+## Start guacamole
+
+# Create container, then add to traefik-proxy network, then start it.
+# Guacamole container needs access to guacd running on the default bridge network. With 'docker run'
+# we can't add to more than one network (we can with 'docker-compose'). And when in the traefik-proxy
+# network the '--link' option doesn't work.
+# To get round this we use docker create to create the container, then docker network connect to add
+# the container to traefik-proxy, then docker start to startup the container.
+# Also '-d' not needed with 'docker create' since 'docker start' sutomatically starts in detached mode.
+
+#docker run -d \
+docker create \
+  --name guacamole \
+  --restart="unless-stopped" \
+  -p 8079:8080 \
+  `# Link to guacd instance --link works if not adding directly to traefik-proxy. Or we can use IP and port env vars instead if adding directly to traefik-proxy ` \
+    --link guacd:guacd \
+    `#-e GUACD_HOSTNAME=${secrets[GUACD_HOSTNAME]}` \
+    `#-e GUACD_PORT=4822` \
+  `# Link to DB instanceinstance --link works if not adding directly to traefik-proxy. Or we can use IP and port env vars instead if adding directly to traefik-proxy` \
+    --link mariadb:mysql \
+    `#-e MYSQL_HOSTNAME=${secrets[MYSQL_HOSTNAME]}` \
+    `#-e MYSQL_PORT=3306` \
+  `# Link to desktop container if we start one` \
+    `#--link desktop-vnc:desktop-vnc` \
+  -v /var/log/docker/guacamole:/usr/local/tomcat/logs \
+  -e GUACAMOLE_HOME="/etc/guacamole" \
+  -v /storage/Docker/guacamole/fail2ban/logback.xml:/etc/guacamole/logback.xml \
+  -e MYSQL_DATABASE="${secrets[MYSQL_DATABASE]}" \
+  -e MYSQL_USER="${secrets[MYSQL_USER]}" \
+  -e MYSQL_PASSWORD="${secrets[MYSQL_PASSWORD]}" \
+  `# ------- Traefik Proxy Section -------` \
+  `#--network traefik-proxy` \
+  -l "traefik.enable=true" \
+  -l "traefik.port=8080" \
+  `#-l "traefik.frontend.rule=Host:$SUBDOMAIN.$FQDN"` \
+  -l "traefik.frontend.rule=Host:$SUBDOMAIN.$FQDN;AddPrefix:/guacamole" \
+  `#-l "traefik.frontend.rule=Host:$SUBDOMAIN.$FQDN;AddPrefix:/guacamole"` \
+  `# -------------------------------------` \
+  guacamole/guacamole
+
+# Add to bridge & traefik-proxy network so it can reach the other container
+docker network connect bridge guacamole
+docker network connect traefik-proxy guacamole
+
+#Start container
+docker start guacamole
+
+## Config guacamole to be served from root path instead of /guacamole
+# Don't need these if using Traefik 'AddPrefix' frontend option
+#docker exec guacamole rm -rf /usr/local/tomcat/webapps/ROOT/
+#docker exec guacamole ln -s /usr/local/tomcat/webapps/guacamole.war /usr/local/tomcat/webapps/ROOT.war
+#docker exec guacamole rm -rf /usr/local/tomcat/webapps/{docs,examples,host-manager,manager}
+

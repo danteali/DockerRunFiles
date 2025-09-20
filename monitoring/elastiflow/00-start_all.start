@@ -1,0 +1,30 @@
+#!/bin/bash
+
+WHEREAMI="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+#Stop all
+docker stop elastiflow
+docker stop elastiflow-elasticsearch-oss
+docker stop elastiflow-kibana-oss
+docker stop elastiflow-logstash-oss
+
+docker rm -f -v elastiflow
+docker rm -f -v elastiflow-elasticsearch-oss
+docker rm -f -v elastiflow-kibana-oss
+docker rm -f -v elastiflow-logstash-oss
+
+
+# For completely fresh start delete data directory ten re-create with correct permissions
+  #sudo rm -rf /storage/Docker/elastiflow/data
+  #sudo mkdir -p /storage/Docker/elastiflow/data
+  #sudo chown -R 1000:1000 /storage/Docker/elastiflow/data
+
+
+cd $WHEREAMI
+./01-elasticsearch.start
+# Elasticsearch has sleep command in it's script already
+sleep 20s
+./02-kibana.start
+sleep 40s
+./03-logstash.start
+

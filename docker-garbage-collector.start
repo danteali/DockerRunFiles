@@ -1,0 +1,35 @@
+#!/bin/bash
+# See: https://github.com/spotify/docker-gc
+
+# Update GitHub with any changes to Docker scripts.
+/home/ryan/scripts/docker/_update_git.sh
+
+NAME="docker-garbage-collector"
+
+docker rm -f -v $NAME
+
+# Pass '--dry-run' parameter to see what would be removed
+
+# Set any default parameters we want to pass togarbage collection
+PARAMS=(-e EXCLUDE_FROM_GC=/etc/docker-gc-exclude \
+        -v /storage/Docker/docker-gc/data/docker-gc-exclude.txt:/etc/docker-gc-exclude \
+        -e GRACE_PERIOD_SECONDS=86400)
+
+if [[ "$1" == "--dry-run" ]]; then
+  PARAMS+=( -e DRY_RUN=1)
+  echo ${PARAMS[@]}
+fi
+
+docker run --rm \
+  --name=$NAME \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  ${PARAMS[@]} \
+  spotify/docker-gc
+
+#Also delte any dangling volumes
+docker volume rm $(docker volume ls -f dangling=true -q)
+
+#Send notification of cleanup
+  #pushbullet "Docker Garbage Collector" "Ran at `date`"
+  slack -u "Docker Garbage Collector" -c "#notifications" -t "Garbage Collection completed at `date`" -e ":put_litter_in_its_place:" -C blue
+  pushover -a docker -T "Docker Garbage Collection" -m "Completed at `date`"

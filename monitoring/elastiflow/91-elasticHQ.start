@@ -1,0 +1,13 @@
+#!/bin/bash
+
+NAME="elk_elastichq"
+
+docker stop $NAME
+docker rm -f -v $NAME
+
+docker run -d \
+  --name $NAME \
+  --restart="unless-stopped" \
+  --network=dockprom_monitor-net \
+  -p 5000:5000 \
+  elastichq/elasticsearch-hq

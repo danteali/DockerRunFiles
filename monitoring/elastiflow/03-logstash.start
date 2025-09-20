@@ -1,0 +1,80 @@
+#!/bin/bash
+
+# Get sensitive info from .conf file
+CONF_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+typeset -A secrets    # Define array to hold variables 
+while read line; do
+  if echo $line | grep -F = &>/dev/null; then
+    varname=$(echo "$line" | cut -d '=' -f 1); secrets[$varname]=$(echo "$line" | cut -d '=' -f 2-)
+  fi
+done < $CONF_DIR/elastiflow.conf
+#echo ${secrets[ELASTIFLOW_ES_HOST]}
+
+NAME="elastiflow-logstash-oss"
+
+docker stop $NAME
+docker rm -f -v $NAME
+
+docker run -d \
+  --name $NAME \
+  --restart="unless-stopped" \
+  -l org.label-schema.group="monitoring" \
+  --network=dockprom_monitor-net \
+  -p 5044:5044 \
+  -p 4739:4739/udp \
+      `#-p 2055:2055/udp` \
+      `#-p 6343:6343/udp` \
+  -v /storage/Docker/elastiflow/config/logstash/conf.d/:/etc/logstash/elastiflow/conf.d/ \
+  -e LS_JAVA_OPTS="-Xms2g -Xmx2g" \
+      `# Default mem allocation - 3GB, recommended for prod - 4GB` \
+      `#-e LS_JAVA_OPTS="-Xms3g -Xmx3g"` \
+      `#-e LS_JAVA_OPTS="-Xms2560m -Xmx2560m"` \
+      `#-e LS_JAVA_OPTS="-Xms1536m -Xmx1536m"` \
+      `#-e LS_JAVA_OPTS="-Xms1g -Xmx1g"` \
+      `#-e LS_JAVA_OPTS="-Xms512m -Xmx512m"` \
+  -e "ELASTIFLOW_DEFAULT_APPID_SRCTYPE=__UNKNOWN" \
+  -e "ELASTIFLOW_RESOLVE_IP2HOST=true" \
+  -e "ELASTIFLOW_NAMESERVER=1.1.1.1" \
+      `#-e "ELASTIFLOW_NETFLOW_IPV4_PORT=2055"` \
+      `#-e "ELASTIFLOW_SFLOW_IPV4_PORT=6343"` \
+      `#-e "ELASTIFLOW_IPFIX_TCP_IPV4_PORT=4739"` \
+  -e "ELASTIFLOW_IPFIX_UDP_IPV4_PORT=4739" \
+  -e "ELASTIFLOW_ES_HOST=${secrets[ELASTIFLOW_ES_HOST]}" \
+  `# Default DNS Cache = 25000` \
+  -e "ELASTIFLOW_DNS_HIT_CACHE_SIZE=10000" \
+  -e "ELASTIFLOW_IPFIX_UDP_WORKERS=2" \
+  -e "ELASTIFLOW_IPFIX_UDP_QUEUE_SIZE=2000" \
+  robcowart/elastiflow-logstash-oss:3.5.1
+  #robcowart/elastiflow-logstash-oss:3.5.0_7.0.1
+  #robcowart/elastiflow-logstash-oss:3.4.1_6.1.3
+
+#NOTES:
+# Env var which might impact sample rate. This value is the elastiflow default value robcowart used.
+#  `#-e "ELASTIFLOW_IPFIX_UDP_RCV_BUFF=33554432"` \
+#
+# Removed the setting from input conf file too so that no value is set which is the logstash default - from just above 'codec' section:
+#        receive_buffer_bytes => "${ELASTIFLOW_IPFIX_UDP_RCV_BUFF:33554432}"
+
+
+# Original docker-compose.yml content:
+    #  elastiflow-logstash-oss:
+    #    image: robcowart/elastiflow-logstash-oss:3.4.1_6.1.3
+    #    container_name: elastiflow-logstash-oss
+    #    restart: 'no'
+    #    depends_on:
+    #      - elastiflow-elasticsearch-oss
+    #    network_mode: host
+    #    environment:
+    #      # JVM Heap size - this MUST be at least 3GB (4GB preferred)
+    #      LS_JAVA_OPTS: '-Xms3g -Xmx3g'
+    #
+    #      # ElastiFlow global configuration
+    #      ELASTIFLOW_DEFAULT_APPID_SRCTYPE: "__UNKNOWN"
+    #
+    #      # Name resolution option
+    #      ELASTIFLOW_RESOLVE_IP2HOST: "false"
+    #      ELASTIFLOW_NAMESERVER: "127.0.0.1"
+    #
+    #      ELASTIFLOW_NETFLOW_IPV4_PORT: 2055
+    #      ELASTIFLOW_SFLOW_IPV4_PORT: 6343
+    #      ELASTIFLOW_IPFIX_TCP_IPV4_PORT: 4739

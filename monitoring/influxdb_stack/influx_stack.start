@@ -1,0 +1,17 @@
+#!/bin/bash
+
+WHEREAMI="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+docker stop influxdb
+docker stop chronograf
+docker stop telegraf
+
+docker rm -f -v influxdb
+docker rm -f -v chronograf
+docker rm -f -v telegraf
+
+cd $WHEREAMI
+
+$WHEREAMI/influxdb.start
+$WHEREAMI/chronograf.start
+$WHEREAMI/telegraf.start

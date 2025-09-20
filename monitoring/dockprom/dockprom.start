@@ -1,0 +1,52 @@
+#!/bin/bash
+
+# Update GitHub with any changes to Docker scripts (timeout to default No after 10s).
+read -r -n 10 -t 5 -p "`echo -e $'\e[0;35m'`Do you wish to update git repo for docker run scripts? [y/N] `echo -e $'\n\e[1;35m'`(Script will continue without updating repo if no response in 5s)`echo -e $'\e[0m'`" response
+response=${response:-No}    # Default response
+if [[ "$response" =~ ^([yY][eE][sS]|[yY])+$ ]]; then
+    /home/ryan/scripts/docker/_update_git.sh
+fi
+echo
+
+# This 'start' script just runs the docker-compose command against the dockprom docker-compose.yml.
+# This is largely just a vanilla implementation of the dockprom stack from:
+# https://github.com/stefanprodan/dockprom
+# The only real customisation I've made is to change the ports where the services are exposed since
+# they clashed with already used ports, and set the environment variables for Grafana email alerts.
+
+# But then I also added the InfluxDB stack as seen on other scripts here (can also be displayed in
+# Grafana). And the various exporter scripts to grab info/push info into Prometheus/InfluxDB.
+
+# Get sensitive info from .conf file
+CONF_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+typeset -A secrets    # Define array to hold variables 
+while read line; do
+  if echo $line | grep -F = &>/dev/null; then
+    varname=$(echo "$line" | cut -d '=' -f 1); secrets[$varname]=$(echo "$line" | cut -d '=' -f 2-)
+  fi
+done < $CONF_DIR/dockprom.conf
+#echo ${secrets[USERNAME]}; echo ${secrets[PASSWORD]}
+
+
+# Revised: Nov 2018
+# Grafana frontend explicitly defined in the traefik.toml file. 
+
+# Check running as root - attempt to restart with sudo if not already running with root
+#if [ $(id -u) -ne 0 ]; then tput setaf 1; echo "Not running as root, attempting to automatically restart script with root access..."; tput sgr0; echo; sudo $0 $*; exit 1; fi
+
+# Stop running dockprom stack
+docker-compose -f /storage/Docker/dockprom/docker-compose.yml down -v
+
+##########################################################################
+# For completely fresh start delete grafana_data persistent storage.
+# Note that grafana_data stores username/password
+#sudo rm -rf /storage/Docker/dockprom/grafana_data
+##########################################################################
+
+# Start dockprom stack
+#docker-compose -f /storage/Docker/dockprom/docker-compose.yml up -d --force-recreate
+
+# Start dockprom stack with specified username/password:
+USERNAME="${secrets[USERNAME]}"
+PASSWORD="${secrets[PASSWORD]}"
+ADMIN_USER=$USERNAME ADMIN_PASSWORD=$PASSWORD docker-compose -f /storage/Docker/dockprom/docker-compose.yml up -d --force-recreate

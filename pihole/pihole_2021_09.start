@@ -1,0 +1,122 @@
+#!/bin/bash
+
+# Frontend explicitly defined in the traefik.toml file. Note that traefik.enable=false below
+
+# Update GitHub with any changes to Docker scripts (timeout to default No after 10s).
+read -r -n 10 -t 5 -p "`echo -e $'\e[0;35m'`Do you wish to update git repo for docker run scripts? [y/N] `echo -e $'\n\e[1;35m'`(Script will continue without updating repo if no response in 5s)`echo -e $'\e[0m'`" response
+response=${response:-No}    # Default response
+if [[ "$response" =~ ^([yY][eE][sS]|[yY])+$ ]]; then
+    /home/ryan/scripts/docker/_update_git.sh
+fi
+echo
+
+# Get sensitive info from .conf file
+CONF_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+typeset -A secrets    # Define array to hold variables 
+while read line; do
+  if echo $line | grep -F = &>/dev/null; then
+    varname=$(echo "$line" | cut -d '=' -f 1); secrets[$varname]=$(echo "$line" | cut -d '=' -f 2-)
+  fi
+done < $CONF_DIR/pihole.conf
+#echo ${secrets[FQDN]}; echo ${secrets[USERNAME]}; echo ${secrets[PASSWORD]}; echo ${secrets[SERVERIP]}
+
+FQDN="${secrets[FQDN]}"
+NAME="pihole"
+
+docker stop $NAME
+docker rm -f -v $NAME
+
+
+#docker run -d \
+docker create \
+  --name="$NAME" \
+  --restart="unless-stopped" \
+  --network lan_net \
+  --ip=${secrets[IP]} \
+  `#--cap-add=NET_ADMIN` `#for DHCP` \
+  `# A dedicated IP means port mapping does not have any effect.` \
+  `# All ports are accessible on dedicated IP and no ports on docker host` \
+  `# are mapped.` \
+  `# Traefik will still redirect FQDN to container through proxy network.` \
+  `# However leaving commented out in case we need to re-enable since` \
+  `# these should still work fine for access via docker host system if` \
+  `# no LAN IP provided` \
+    `#-p 53:53/tcp` \
+    `#-p 53:53/udp` \
+    `#-p 37337:80/tcp` \
+    `#-p 67:67/udp` `#if using DHCP`\
+  `# Remember to 'touch' log file before first run or dir is created by docker` \
+  -v /var/log/docker/pihole/pihole.log:/var/log/pihole.log \
+  -v /storage/Docker/pihole/config_2021_09/etc/dnsmasq.d/:/etc/dnsmasq.d/ \
+  -v /storage/Docker/pihole/config_2021_09/etc/pihole/:/etc/pihole/ \
+  -e ServerIP=${secrets[SERVERIP]} \
+  -e WEBPASSWORD="" \
+  -e TZ="Europe/London" \
+  `# Don't think we need this as not using NGINX proxy` \
+    `#-e PROXY_LOCATION=pihole` `#previously for nginx proxy?`\
+  `# Don't think we need these, they define alternative hostname to access pihole` \
+    `#-e VIRTUAL_HOST=pihole` \
+    `#-e VIRTUAL_PORT=80` \
+  `# Set these in GUI now - on creation defaults to google 8.8.8.8, 8.8.4.4` \
+    `#-e PIHOLE_DNS_=1.1.1.1;9.9.9.9` \
+    `#-e PIHOLE_DNS_=192.168.0.1;192.168.0.1` \
+    `#-e PIHOLE_DNS_=208.67.222.222;208.67.220.220` \
+  `# May be used for client name resolution, try enabling later if needed` \
+    `#--dns 127.0.0.1` \
+    `#--dns 1.1.1.1` \
+  `# ------- Traefik Proxy Section -------` \
+  `#--network traefik-proxy` \
+  -l "traefik.enable=true" \
+  -l "traefik.port=80" \
+  `#-l 'traefik.frontend.auth.basic.removeHeader=true'` \
+  `#-l "traefik.frontend.auth.basic.users=${secrets[USERNAME]}:${secrets[PASSWORD]}"` \
+  -l "traefik.frontend.rule=Host:$NAME.$FQDN,{catchall:.*}" \
+  -l traefik.frontend.headers.SSLRedirect=true \
+  -l traefik.frontend.headers.STSSeconds=315360000 \
+  -l traefik.frontend.headers.browserXSSFilter=true \
+  -l traefik.frontend.headers.contentTypeNosniff=true \
+  -l traefik.frontend.headers.forceSTSHeader=true \
+  -l traefik.frontend.headers.SSLHost=${FQDN} \
+  -l traefik.frontend.headers.STSIncludeSubdomains=true \
+  -l traefik.frontend.headers.STSPreload=true \
+  -l traefik.frontend.headers.frameDeny=true \
+  `# -------------------------------------` \
+  `# Dont update image with watchtower` \
+  -l com.centurylinklabs.watchtower.enable=false \
+  pihole/pihole:2021.09
+  # At upgrade, 'latest' tag corresponded with '2021.09' however think naming convention just changed
+  # as version prior to this was 'v5.8.1'. '2021.09' would be closest to 'v5.9' if old naming convention
+  # retained.
+
+  # Config backup in /storage/Docker/pihole/config_4.1.1 was for image tagged pihole/pihole:4.1.1
+    # This was the last long term image used. Working fine but updated since some features (group
+    # management) not available. Revert back to this one if needed. 'start' file will be retained too.
+
+# Add to bridge & traefik-proxy network so it can reach the other container
+docker network connect bridge $NAME
+docker network connect traefik-proxy $NAME
+
+# Start container
+docker start $NAME
+
+# Fix pihole dir permissions:
+sleep 10
+docker exec $NAME chown -R www-data:pihole /etc/pihole
+
+#printf 'Starting up pihole container '
+#for i in $(seq 1 20); do
+#    if [ "$(docker inspect -f "{{.State.Health.Status}}" pihole)" == "healthy" ] ; then
+#        printf ' OK'
+#        echo -e "\n$(docker logs pihole 2> /dev/null | grep 'password:') for your pi-hole: https://${IP}/admin/"
+#        exit 0
+#    else
+#        sleep 3
+#        printf '.'
+#    fi
+#
+#    if [ $i -eq 20 ] ; then
+#        echo -e "\nTimed out waiting for Pi-hole start, consult check your container logs for more info (\`docker logs pihole\`)"
+#        exit 1
+#    fi
+#done;
+

@@ -1,0 +1,23 @@
+#!/bin/bash
+
+NAME="varken"
+
+docker stop $NAME
+docker rm -f -v $NAME
+
+#docker run -d \
+docker create \
+  --restart="unless-stopped" \
+  --name="$NAME" \
+  --network dockprom_monitor-net \
+  -l org.label-schema.group="monitoring" \
+  -v /storage/Docker/varken/data:/config \
+  -e PGID=1000 -e PUID=1000 \
+  -e TZ="Europe/London" \
+  --log-driver json-file \
+  --log-opt max-size=20m \
+  --log-opt max-file=10 \
+  boerderij/varken
+
+docker network connect traefik-proxy $NAME
+docker start $NAME

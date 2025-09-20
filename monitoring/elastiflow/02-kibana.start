@@ -1,0 +1,74 @@
+#!/bin/bash
+
+# Get sensitive info from .conf file
+CONF_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+typeset -A secrets    # Define array to hold variables 
+while read line; do
+  if echo $line | grep -F = &>/dev/null; then
+    varname=$(echo "$line" | cut -d '=' -f 1); secrets[$varname]=$(echo "$line" | cut -d '=' -f 2-)
+  fi
+done < $CONF_DIR/elastiflow.conf
+#echo ${secrets[FQDN]}; echo ${secrets[HOST]}; echo ${secrets[PASSWORD]}
+
+FQDN="${secrets[FQDN]}"
+NAME="elastiflow-kibana-oss"
+
+docker stop $NAME
+docker rm -f -v $NAME
+
+# Create container, then add to traefik-proxy network, then start it to make sure it has access to it's 'normal' network
+# We use 'docker create' to create the container, then 'docker network connect' to add the container to traefik-proxy,
+# then 'docker start' to startup the container.
+# Also '-d' not needed with 'docker create' since 'docker start' sutomatically starts in detached mode.
+
+#docker run -d \
+docker create \
+  --name $NAME \
+  --restart="unless-stopped" \
+  -l org.label-schema.group="monitoring" \
+    `#--network=dockprom_monitor-net` \
+  -p 5601:5601 \
+      `#-v /storage/Docker/elastiflow/config/kibana/config:/usr/share/kibana/config` \
+  -e "SERVER_HOST=0.0.0.0" \
+  -e "ELASTICSEARCH_URL=${secrets[HOST]}" \
+  -e "ELASTICSEARCH_HOSTS=${secrets[HOST]}" \
+  -e "SERVER_PORT=5601" \
+  -e "KIBANA_DEFAULTAPPID=dashboard/653cf1e0-2fd2-11e7-99ed-49759aed30f5" \
+  -e "LOGGING_QUIET=true" \
+  -e "LOGGING_DEST=stdout" \
+  `# ------- Traefik Proxy Section -------` \
+  -l "traefik.enable=true" \
+  -l "traefik.port=5601" \
+  -l "traefik.frontend.rule=Host:kibana.$FQDN" \
+  -l "traefik.frontend.auth.basic.users=${secrets[KIBANA_USER]}:${secrets[KIBANA_PASS]}" \
+  `# -------------------------------------` \
+  docker.elastic.co/kibana/kibana-oss:7.3.0
+  #docker.elastic.co/kibana/kibana-oss:7.0.1
+  #docker.elastic.co/kibana/kibana-oss:6.6.1
+
+# Add to traefik-proxy network so it can reach the other container
+docker network connect dockprom_monitor-net $NAME
+docker network connect traefik-proxy $NAME
+
+# Start container
+docker start $NAME
+
+# See archived Mar-18 script which includes custom Sentinl merged image. Sentinl included by defult as of 6.5
+
+# Original docker-compose.yml content:
+  #    elastiflow-kibana-oss:
+  #      image: docker.elastic.co/kibana/kibana-oss:6.6.1
+  #      container_name: elastiflow-kibana-oss
+  #      restart: 'no'
+  #      depends_on:
+  #        - elastiflow-elasticsearch-oss
+  #      network_mode: host
+  #      environment:
+  #        SERVER_HOST: 0.0.0.0
+  #        SERVER_PORT: 5601
+  #
+  #        ELASTICSEARCH_URL: "http://127.0.0.1:9200"
+  #
+  #        KIBANA_DEFAULTAPPID: "dashboard/653cf1e0-2fd2-11e7-99ed-49759aed30f5"
+  #
+  #        LOGGING_QUIET: 'true'

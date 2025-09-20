@@ -1,0 +1,124 @@
+#!/bin/bash
+
+# Update GitHub with any changes to Docker scripts (timeout to default No after 5s).
+read -r -n 10 -t 5 -p "`echo -e $'\e[0;35m'`Do you wish to update git repo for docker run scripts? [y/N] `echo -e $'\n\e[1;35m'`(Script will continue without updating repo if no response in 5s)`echo -e $'\e[0m'`" response
+response=${response:-No}    # Default response
+if [[ "$response" =~ ^([yY][eE][sS]|[yY])+$ ]]; then
+    /home/ryan/scripts/docker/_update_git.sh
+fi
+echo
+
+# Get sensitive info from .conf file
+CONF_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+typeset -A secrets    # Define array to hold variables 
+while read line; do
+  if echo $line | grep -F = &>/dev/null; then
+    varname=$(echo "$line" | cut -d '=' -f 1); secrets[$varname]=$(echo "$line" | cut -d '=' -f 2-)
+  fi
+done < $CONF_DIR/unifi.conf
+#echo ${secrets[FQDN]}
+
+FQDN="${secrets[FQDN]}"
+NAME=unifi
+
+docker stop $NAME
+docker rm -f -v $NAME
+
+# Create container, then add to traefik-proxy network, then start it to make sure it has access to it's 'normal' network
+# We use 'docker create' to create the container, then 'docker network connect' to add the container to traefik-proxy,
+# then 'docker start' to startup the container.
+# Also '-d' not needed with 'docker create' since 'docker start' sutomatically starts in detached mode.
+
+#docker run -d \
+docker create \
+  --name $NAME \
+  --restart="unless-stopped" \
+  -e PUID=1000 \
+  -e PGID=1000 \
+  -e MEM_LIMIT=1024M `#optional` \
+  `# A dedicated IP means port mapping does not have any effect.` \
+  `# All ports are accessible on dedicated IP and no ports on docker host` \
+  `# are mapped.` \
+  `# Traefik will still redirect FQDN to container through proxy network.` \
+  `# However leaving commented out in case we need to re-enable since` \
+  `# these should still work fine for access via docker host system if` \
+  `# no LAN IP provided` \
+    `#-p 3478:3478/udp` \
+    `#-p 10001:10001/udp` \
+    `#-p 1900:1900/udp` \
+    `#-p 8080:8080` \
+    `#-p 8081:8081` \
+    `#-p 8443:8443` \
+    `#-p 8843:8843` \
+    `#-p 8880:8880` \
+    `#-p 6789:6789` \
+  --network lan_net \
+  --ip=${secrets[IP]} \
+  -v /storage/Docker/unifi_linuxserver/data:/config \
+  -e TZ='Europe/London' \
+  `# ------- Traefik Proxy Section -------` \
+  `# Couldn't get traefik labels definition working.` \
+  `# See traefik static config` \
+  `#--network traefik-proxy` \
+  -l "traefik.enable=false" \
+  `#-l "traefik.admin.frontend.rule=Host:unifi.$FQDN"` \
+  `#-l "traefik.admin.port=8443"` \
+  `#-l "traefik.admin.protocol=https"` \
+  `#-l "traefik.unifiadopt.frontend.rule=Host:unifiadopt.$FQDN"` \
+  `#-l "traefik.unifiadopt.port=8080"` \
+  `# Entrypoint at 8080 defined in treafik.toml. Not sure if needed.` \
+  `# Uncomment below and toml entrypooint if doesn't work as is.` \
+    `#-l "traefik.unifiadopt.frontend.entryPoints=unifiadopt"` \
+  `#-l "traefik.portal.frontend.rule=Host:portal.$FQDN"` \
+  `#-l "traefik.portal.port=8843"` \
+  `#-l "traefik.portal.protocol=https"` \
+  `#-l "traefik.frontend.headers.SSLRedirect=true"` \
+  `#-l "traefik.frontend.headers.STSSeconds=315360000"` \
+  `#-l "traefik.frontend.headers.browserXSSFilter=true"` \
+  `#-l "traefik.frontend.headers.contentTypeNosniff=true"` \
+  `#-l "traefik.frontend.headers.forceSTSHeader=true"` \
+  `#-l "traefik.frontend.headers.SSLHost=example.com"` \
+  `#-l "traefik.frontend.headers.STSIncludeSubdomains=true"` \
+  `#-l "traefik.frontend.headers.STSPreload=true"` \
+  `#-l "traefik.frontend.headers.frameDeny=true"` \
+  `#-l "traefik.frontend.passHostHeader=true"` \
+  `# -------------------------------------` \
+  -l com.centurylinklabs.watchtower.enable='false' \
+  linuxserver/unifi-controller:latest
+#  jacobalberty/unifi:5.6
+
+# Add to bridge & traefik-proxy network so it can reach the other container
+docker network connect bridge $NAME
+docker network connect traefik-proxy $NAME
+
+# Start container
+docker start $NAME
+
+
+# Couldn't get traefik labels working in container so using traefik's
+# static definition for URL.
+# Note that pourposfully didn't define URL to include port redirection
+# since Ubiquity stuff tends to append it's own port number (e.g. when
+# doing adoption) so simply pointing to dedicated ip should work. Just
+# need to remember to add own port number for GUI access.
+
+#  `#-l traefik.frontend.headers.SSLRedirect=true` \
+#  `#-l traefik.frontend.headers.STSSeconds=315360000` \
+#  `#-l traefik.frontend.headers.browserXSSFilter=true` \
+#  `#-l traefik.frontend.headers.contentTypeNosniff=true` \
+#  `#-l traefik.frontend.headers.forceSTSHeader=true` \
+#  `#-l traefik.frontend.headers.SSLHost=${FQDN}` \
+#  `#-l traefik.frontend.headers.STSIncludeSubdomains=true` \
+#  `#-l traefik.frontend.headers.STSPreload=true` \
+#  `#-l traefik.frontend.headers.frameDeny=true` \
+
+
+#  -l traefik.portal.frontend.headers.SSLRedirect=true \
+#  -l traefik.portal.frontend.headers.STSSeconds=315360000 \
+#  -l traefik.portal.frontend.headers.browserXSSFilter=true \
+#  -l traefik.portal.frontend.headers.contentTypeNosniff=true \
+#  -l traefik.portal.frontend.headers.forceSTSHeader=true \
+#  -l traefik.portal.frontend.headers.SSLHost=${FQDN} \
+#  -l traefik.portal.frontend.headers.STSIncludeSubdomains=true \
+#  -l traefik.portal.frontend.headers.STSPreload=true \
+#  -l traefik.portal.frontend.headers.frameDeny=true \

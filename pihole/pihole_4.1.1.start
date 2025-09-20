@@ -1,0 +1,109 @@
+#!/bin/bash
+
+# Frontend explicitly defined in the traefik.toml file. Note that traefik.enable=false below
+
+# Update GitHub with any changes to Docker scripts (timeout to default No after 10s).
+read -r -n 10 -t 5 -p "`echo -e $'\e[0;35m'`Do you wish to update git repo for docker run scripts? [y/N] `echo -e $'\n\e[1;35m'`(Script will continue without updating repo if no response in 5s)`echo -e $'\e[0m'`" response
+response=${response:-No}    # Default response
+if [[ "$response" =~ ^([yY][eE][sS]|[yY])+$ ]]; then
+    /home/ryan/scripts/docker/_update_git.sh
+fi
+echo
+
+# Get sensitive info from .conf file
+CONF_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+typeset -A secrets    # Define array to hold variables 
+while read line; do
+  if echo $line | grep -F = &>/dev/null; then
+    varname=$(echo "$line" | cut -d '=' -f 1); secrets[$varname]=$(echo "$line" | cut -d '=' -f 2-)
+  fi
+done < $CONF_DIR/pihole.conf
+#echo ${secrets[FQDN]}; echo ${secrets[USERNAME]}; echo ${secrets[PASSWORD]}; echo ${secrets[SERVERIP]}
+
+FQDN="${secrets[FQDN]}"
+NAME="pihole4"
+
+docker stop $NAME
+docker rm -f -v $NAME
+
+# Could not get working properly with Traefik by using docker labels.
+# Using Traefik's [file] config instead - see traefik.toml
+
+#docker run -d \
+docker create \
+  --name="$NAME" \
+  --restart="unless-stopped" \
+  -p 53:53/tcp \
+  -p 53:53/udp \
+  -p 37337:80/tcp \
+  -p 37338:443 \
+  `# port 67 needed if using piholes DHCP service` \
+  `#-p 67:67/udp` \
+  -v /storage/Docker/pihole/config_4.1.1/pihole.log:/var/log/pihole.log \
+  -v /storage/Docker/pihole/config_4.1.1/etc/hosts:/etc/hosts \
+  -v /storage/Docker/pihole/config_4.1.1/etc/dnsmasq.d/:/etc/dnsmasq.d/ \
+  -v /storage/Docker/pihole/config_4.1.1/etc/pihole/:/etc/pihole/ \
+  `# From 4.2.2 --cap-add NET_ADMIN no longer required unless using DHCP, leaving in case roll back to 4.1.1 needed` \
+  --cap-add=NET_ADMIN \
+  `# From 4.2.2 ServerIP no longer required unless customising lighttpd, leaving in case roll back to 4.1.1 needed` \
+  -e ServerIP=${secrets[SERVERIP]} \
+  -e PROXY_LOCATION=pihole \
+  -e VIRTUAL_HOST=pihole \
+  -e VIRTUAL_PORT=80 \
+  -e WEBPASSWORD="" \
+  -e TZ="Europe/London" \
+    `#-e DNS1=1.1.1.1` \
+    `#-e DNS2=9.9.9.9` \
+    `#-e DNS1=192.168.0.1` \
+    `#-e DNS2=192.168.0.1` \
+  -e DNS1=208.67.222.222 \
+  -e DNS2=208.67.220.220 \
+  --dns 127.0.0.1 \
+  --dns 1.1.1.1 \
+  `# ------- Traefik Proxy Section -------` \
+  -l "traefik.enable=true" \
+  -l "traefik.port=80" \
+  `#-l 'traefik.frontend.auth.basic.removeHeader=true'` \
+  `#-l "traefik.frontend.auth.basic.users=${secrets[USERNAME]}:${secrets[PASSWORD]}"` \
+  -l "traefik.frontend.rule=Host:$NAME.$FQDN,{catchall:.*}" \
+  -l traefik.frontend.headers.SSLRedirect=true \
+  -l traefik.frontend.headers.STSSeconds=315360000 \
+  -l traefik.frontend.headers.browserXSSFilter=true \
+  -l traefik.frontend.headers.contentTypeNosniff=true \
+  -l traefik.frontend.headers.forceSTSHeader=true \
+  -l traefik.frontend.headers.SSLHost=${FQDN} \
+  -l traefik.frontend.headers.STSIncludeSubdomains=true \
+  -l traefik.frontend.headers.STSPreload=true \
+  -l traefik.frontend.headers.frameDeny=true \
+  `# -------------------------------------` \
+  `# Dont update image with watchtower` \
+  -l com.centurylinklabs.watchtower.enable=false \
+  pihole/pihole:4.1.1
+  #pihole/pihole:5.1.2 # Worked fine but error writing to readonly DB for any changes to white/blacklists and groups - reverted to 4.1.1
+  #pihole/pihole:latest
+  #pihole/pihole:4.1.1 # Confirmed working. Working config backed up 02/10/20
+
+# Add to bridge & traefik-proxy network so it can reach the other container
+docker network connect bridge $NAME
+docker network connect traefik-proxy $NAME
+
+# Start container
+docker start $NAME
+
+#printf 'Starting up pihole container '
+#for i in $(seq 1 20); do
+#    if [ "$(docker inspect -f "{{.State.Health.Status}}" pihole)" == "healthy" ] ; then
+#        printf ' OK'
+#        echo -e "\n$(docker logs pihole 2> /dev/null | grep 'password:') for your pi-hole: https://${IP}/admin/"
+#        exit 0
+#    else
+#        sleep 3
+#        printf '.'
+#    fi
+#
+#    if [ $i -eq 20 ] ; then
+#        echo -e "\nTimed out waiting for Pi-hole start, consult check your container logs for more info (\`docker logs pihole\`)"
+#        exit 1
+#    fi
+#done;
+

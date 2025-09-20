@@ -1,0 +1,16 @@
+#!/bin/bash
+
+NAME="influxdb-speedtest"
+
+docker stop $NAME
+docker rm -f -v $NAME
+
+docker run -d \
+  --name=$NAME \
+  --restart="unless-stopped" \
+  --network dockprom_monitor-net \
+  -l org.label-schema.group="monitoring" \
+  -v /storage/Docker/influxdb-speedtest/data/config.ini:/src/config.ini \
+  mils180/speedtest-for-influxdb-and-grafana
+  #atribe/speedtest-for-influxdb-and-grafana:patch-1
+  #barrycarey/speedtest-for-influxdb-and-grafana

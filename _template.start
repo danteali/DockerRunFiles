@@ -1,0 +1,47 @@
+#!/bin/bash
+
+# Update GitHub with any changes to Docker scripts.
+/home/ryan/scripts/docker/_update_git.sh
+
+# Get user/pass from .conf file
+CONF_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+typeset -A secrets    # Define array to hold variables 
+while read line; do
+  if echo $line | grep -F = &>/dev/null; then
+    varname=$(echo "$line" | cut -d '=' -f 1); secrets[$varname]=$(echo "$line" | cut -d '=' -f 2-)
+  fi
+done < $CONF_DIR/???????.conf
+#echo ${secrets[FQDN]}; echo ${secrets[USERNAME]}; echo ${secrets[PASSWORD]}
+
+FQDN="${secrets[FQDN]}"
+NAME=""
+SUBDOMAIN=$NAME
+
+docker stop $NAME
+docker rm -f -v $NAME
+
+# Create container, then add to traefik-proxy network, then start it to make sure it has access to it's 'normal' network
+# We use 'docker create' to create the container, then 'docker network connect' to add the container to traefik-proxy,
+# then 'docker start' to startup the container.
+# Also '-d' not needed with 'docker create' since 'docker start' sutomatically starts in detached mode.
+
+#docker run -d \
+docker create \
+  --name=$NAME \
+  --restart="unless-stopped" \
+  -p \
+  -v /storage/Docker/$NAME: \
+  `# ------- Traefik Proxy Section -------` \
+  `#--network traefik-proxy` \
+  -l "traefik.enable=true" \
+  -l "traefik.frontend.rule=Host:$SUBDOMAIN.$FQDN" \
+  -l "traefik.port=XXXX" \
+  `# -------------------------------------` \
+  image/image
+
+# Add to bridge & traefik-proxy network so it can reach other containers
+docker network connect bridge $NAME
+docker network connect traefik-proxy $NAME
+
+# Start container
+docker start $NAME

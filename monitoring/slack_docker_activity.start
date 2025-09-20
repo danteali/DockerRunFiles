@@ -1,0 +1,31 @@
+#!/bin/bash
+
+
+# Update GitHub with any changes to Docker scripts.
+#/home/ryan/scripts/docker/_update_git.sh
+
+# Get sensitive info from .conf file
+CONF_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+typeset -A secrets    # Define array to hold variables 
+while read line; do
+  if echo $line | grep -F = &>/dev/null; then
+    varname=$(echo "$line" | cut -d '=' -f 1); secrets[$varname]=$(echo "$line" | cut -d '=' -f 2-)
+  fi
+done < $CONF_DIR/slack_docker_activity.conf
+echo ${secrets[SL_WEBHOOK_URL]}
+
+NAME="slack_docker_activity"
+
+docker stop $NAME
+docker rm -f -v $NAME
+
+docker run -d \
+  --name $NAME \
+  --restart="unless-stopped" \
+  -e "webhook=${secrets[SL_WEBHOOK_URL]}" \
+  -e image_regexp='([^l]|[^r]l|[^u]rl|[^c]url)$' \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  --log-driver json-file \
+  --log-opt max-size=20m \
+  --log-opt max-file=10 \
+  int128/slack-docker

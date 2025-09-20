@@ -1,0 +1,26 @@
+#!/bin/bash
+
+# Amended macvlan script to enable use in VM testing. Make sure to edit
+# 'ip addr add 192.168.0.241/32' to reflect LAN IP of VM.
+#
+# And update ip route to reflect subnet mask we're using for VM testing.
+# Shouldn't need changed since '192.168.0.232/29' should work fine and give
+# us IPs in range .233 -> .239 so starts after NAS macvlan range and won't
+# clash with VM IPs.
+
+# Delete old macvlan just in case it is still there 
+sudo ip link delete lan_net-shim
+
+# Check that network connection is up
+while ! ping -q -c 1 192.168.0.1 > /dev/null
+do
+    echo "$0: Cannot ping router, waiting another 5 secs..."
+    sleep 5
+done
+
+# Configure macvlan
+sudo ip link add lan_net-shim link enp0s3 type macvlan  mode bridge
+sudo ip addr add 192.168.0.241/32 dev lan_net-shim
+sudo ip link set lan_net-shim up
+sudo ip route add 192.168.0.232/29 dev lan_net-shim
+

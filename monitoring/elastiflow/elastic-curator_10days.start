@@ -1,0 +1,28 @@
+#!/bin/bash
+
+NAME="elk_curator"
+
+docker stop $NAME
+docker rm -f -v $NAME
+
+docker run --rm \
+  --name $NAME \
+  -v /storage/Docker/ELK/curator/config:/config \
+  bobrik/curator:latest \
+  --config /config/curator.yml \
+  /config/action_10days.yml
+
+
+
+#While we're running this we might as well reset the number of replicas to make the status Green
+# Get sensitive info from .conf file
+CONF_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+typeset -A secrets    # Define array to hold variables 
+while read line; do
+  if echo $line | grep -F = &>/dev/null; then
+    varname=$(echo "$line" | cut -d '=' -f 1); secrets[$varname]=$(echo "$line" | cut -d '=' -f 2-)
+  fi
+done < $CONF_DIR/elastic-curator.conf
+#echo ${secrets[HOST]}
+HOST=${secrets[HOST]}
+curl -X PUT '$HOST/_all/_settings?preserve_existing=false' -H 'Content-Type: application/json' -d '{"index.number_of_replicas":"0"}'

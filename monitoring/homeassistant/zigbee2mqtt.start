@@ -1,0 +1,55 @@
+#!/bin/bash
+
+# Get sensitive info from .conf file
+CONF_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+typeset -A secrets    # Define array to hold variables 
+while read line; do
+  if echo $line | grep -F = &>/dev/null; then
+    varname=$(echo "$line" | cut -d '=' -f 1); secrets[$varname]=$(echo "$line" | cut -d '=' -f 2-)
+  fi
+done < $CONF_DIR/zigbee2mqtt.conf
+#echo ${secrets[FQDN]}; echo ${secrets[IP]}
+
+FQDN="${secrets[FQDN]}"
+NAME="zigbee2mqtt"
+
+docker stop $NAME
+docker rm -f -v $NAME
+
+docker create \
+  --name=$NAME \
+  --restart="unless-stopped" \
+  -p 11121:11121 \
+  `#--net=host` \
+  -l org.label-schema.group="monitoring" \
+  -v /storage/Docker/zigbee2mqtt/data:/app/data \
+  `#-v /storage/Docker/zigbee2mqtt/data/zigbee-herdsman-converters:/app/node_modules/zigbee-herdsman-converters` \
+  `#-v /storage/Docker/zigbee2mqtt/data/lib/extension/homeassistant.ts:/app/lib/extension/homeassistant.ts` \
+  -v /var/log/docker/zigbee2mqtt:/app/data/log \
+  `#--device=/dev/ttyACM0` \
+  --device=/dev/ttyUSB0 \
+  -e TZ=$TZ \
+  `#--log-driver json-file` \
+  `#--log-opt max-size=20m` \
+  `#--log-opt max-file=10` \
+  `# ------- Traefik Proxy Section -------` \
+  -l "traefik.enable=true" \
+  -l "traefik.port=11121" \
+  -l "traefik.frontend.rule=Host:zigbee2mqtt.$FQDN" \
+  `# -------------------------------------` \
+  koenkk/zigbee2mqtt:1.21.2 # 'latest' as of 20211005
+  #koenkk/zigbee2mqtt:1.17.0 #Working fine
+  #koenkk/zigbee2mqtt:1.17.1
+  #koenkk/zigbee2mqtt:latest
+  #koenkk/zigbee2mqtt:1.16.2
+  #koenkk/zigbee2mqtt:1.14.2
+  #koenkk/zigbee2mqtt:1.4.0
+  #koenkk/zigbee2mqtt:latest-dev
+
+
+# Add to traefik-proxy network so it can reach the other container
+docker network connect bridge $NAME
+docker network connect traefik-proxy $NAME
+
+# Start container
+docker start $NAME

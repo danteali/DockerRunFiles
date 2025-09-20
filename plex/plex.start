@@ -1,0 +1,100 @@
+#!/bin/bash
+
+# Update GitHub with any changes to Docker scripts (timeout to default No after 5s).
+read -r -n 10 -t 5 -p "`echo -e $'\e[0;35m'`Do you wish to update git repo for docker run scripts? [y/N] `echo -e $'\n\e[1;35m'`(Script will continue without updating repo if no response in 5s)`echo -e $'\e[0m'`" response
+response=${response:-No}    # Default response
+if [[ "$response" =~ ^([yY][eE][sS]|[yY])+$ ]]; then
+    /home/ryan/scripts/docker/_update_git.sh
+fi
+echo
+
+# Get sensitive info from .conf file
+CONF_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+typeset -A secrets    # Define array to hold variables 
+while read line; do
+  if echo $line | grep -F = &>/dev/null; then
+    varname=$(echo "$line" | cut -d '=' -f 1); secrets[$varname]=$(echo "$line" | cut -d '=' -f 2-)
+  fi
+done < $CONF_DIR/plex.conf
+#echo ${secrets[FQDN]}; echo ${secrets[MAC_ADDRESS]}; echo ${secrets[PLEX_CLAIM]}; echo ${secrets[ADVERTISE_IP]}
+
+FQDN="${secrets[FQDN]}"
+NAME=plex
+
+docker stop $NAME
+docker rm -f -v $NAME
+
+# Create container, then add to traefik-proxy network, then start it to make sure it has access to it's 'normal' network
+# We use 'docker create' to create the container, then 'docker network connect' to add the container to traefik-proxy,
+# then 'docker start' to startup the container.
+# Also '-d' not needed with 'docker create' since 'docker start' sutomatically starts in detached mode.
+
+# Need to create a symlink for fail2ban to read log file since it can't handle spaces:
+# ln -s /var/log/docker/plex/Plex\ Media\ Server.log /var/log/docker/plex/PlexMediaServer.fail2ban
+# Use 'fail2ban' extension so that we can avoid any logrotate automation changing file.
+
+#docker run -d \
+docker create \
+  --name $NAME \
+  --restart="unless-stopped" \
+  --mac-address="${secrets[MAC_ADDRESS]}" \
+  -p 32400:32400/tcp \
+  -p 33400:33400 \
+  -p 3005:3005/tcp \
+  -p 8324:8324/tcp \
+  -p 32469:32469/tcp \
+  -p 1900:1900/udp \
+  -p 32410:32410/udp \
+  -p 32412:32412/udp \
+  -p 32413:32413/udp \
+  -p 32414:32414/udp \
+  -e TZ="Europe/London" \
+  -e PLEX_CLAIM="${secrets[PLEX_CLAIM]}" \
+  -e ADVERTISE_IP="${secrets[ADVERTISE_IP]}" \
+  -h crush \
+  -v /storage/Docker/plex/data:/config \
+  `#-v /tmp/plex/transcode:/transcode` \
+  -v /storage/Docker/plex/transcode:/transcode \
+  -v /storage/Media/Video:/data \
+  -v /storage/Media/Audio:/Music:ro \
+  -v /storage/Media/Pictures:/Pictures:ro \
+  -v /storage/scratchpad:/scratchpad:ro \
+  -v /storage/scratchpad/_IPTV:/iptv \
+  -v /var/log/docker/plex:/config/Library/Application\ Support/Plex\ Media\ Server/Logs \
+  --device /dev/dri:/dev/dri \
+  `# ------- Traefik Proxy Section -------` \
+  `#--network traefik-proxy` \
+  -l "traefik.enable=true" \
+  -l "traefik.port=32400" \
+  -l "traefik.frontend.rule=Host:$NAME.$FQDN" \
+  `# -------------------------------------` \
+plexinc/pms-docker:public
+
+
+# Add to traefik-proxy network so it can reach the other container - '--link' options above doesn't seem to work proerly if we try to add straight to traefik-proxy above.
+docker network connect bridge $NAME
+docker network connect traefik-proxy $NAME
+
+# Start container
+docker start $NAME
+
+
+# Old timhaak image config:
+#docker run -d \
+#  --restart="unless-stopped" \
+#  --name $NAME \
+#  -h crush \
+#  -v /storage/Docker/plex:/config \
+#  -v /storage/Media/Video:/data \
+#  -v /storage/Media/Audio:/Music \
+#  -v /storage/Media/Pictures:/Pictures \
+#  -v /storage/scratchpad:/scratchpad \
+#  -e SKIP_CHOWN_CONFIG=true \
+#  --net=host \
+#  -e PLEX_USERNAME="$PLEX_USERNAME" \
+#  -e PLEX_PASSWORD="$PLEX_PASSWORD" \
+#  `#-p 32400:32400` \
+#  `#-e "VIRTUAL_HOST=$SUBDOMAIN.$FQDN"` \
+#  `#-e "VIRTUAL_PORT=32400"` \
+#  `#--expose=32403` \
+#  timhaak/plex

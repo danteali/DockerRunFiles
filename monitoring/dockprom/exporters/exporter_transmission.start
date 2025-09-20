@@ -1,0 +1,36 @@
+#!/bin/bash
+
+# Get sensitive info from .conf file
+CONF_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+typeset -A secrets    # Define array to hold variables 
+while read line; do
+  if echo $line | grep -F = &>/dev/null; then
+    varname=$(echo "$line" | cut -d '=' -f 1); secrets[$varname]=$(echo "$line" | cut -d '=' -f 2-)
+  fi
+done < $CONF_DIR/exporters.conf
+#echo ${secrets[TRANS_USERNAME]}; echo ${secrets[TRANS_PASSWORD]}
+
+
+NAME="prometheus-transmission"
+
+docker stop $NAME
+docker rm -f -v $NAME
+
+docker create \
+  --name=$NAME \
+  --restart="unless-stopped" \
+  -p 19091:19091 \
+  --network dockprom_monitor-net \
+  -e "TRANSMISSION_USERNAME=${secrets[TRANS_USERNAME]}" \
+  -e "TRANSMISSION_PASSWORD=${secrets[TRANS_PASSWORD]}" \
+  -e "TRANSMISSION_ADDR=http://torr_pia:9091" \
+  -l org.label-schema.group="monitoring" \
+  metalmatze/transmission-exporter
+
+docker network connect traefik-proxy $NAME
+docker start $NAME
+
+# Can check transmission container reachable from exporter with:
+#docker exec dockprom-transmission-exporter ping torr_pia
+# Can check exporter reachable from Prometheus with:
+#docker exec prometheus ping dockprom-transmission-exporter

@@ -1,0 +1,90 @@
+#!/bin/bash
+
+# Frontend explicitly defined in the traefik.toml file
+
+# No 'secrets' to pull in from conf file. 
+
+# Update GitHub with any changes to Docker scripts (timeout to default No after 10s).
+read -r -n 10 -t 5 -p "`echo -e $'\e[0;35m'`Do you wish to update git repo for docker run scripts? [y/N] `echo -e $'\n\e[1;35m'`(Script will continue without updating repo if no response in 5s)`echo -e $'\e[0m'`" response
+response=${response:-No}    # Default response
+if [[ "$response" =~ ^([yY][eE][sS]|[yY])+$ ]]; then
+    /home/ryan/scripts/docker/_update_git.sh
+fi
+echo
+
+# Get sensitive info from .conf file
+CONF_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+typeset -A secrets    # Define array to hold variables 
+while read line; do
+  if echo $line | grep -F = &>/dev/null; then
+    varname=$(echo "$line" | cut -d '=' -f 1); secrets[$varname]=$(echo "$line" | cut -d '=' -f 2-)
+  fi
+done < $CONF_DIR/unms.conf
+#echo ${secrets[FQDN]}
+
+FQDN="${secrets[FQDN]}"
+NAME=unms
+
+docker stop $NAME
+docker rm -f -v $NAME
+
+# Could not get working properly with Traefik by using docker labels.
+# Using Traefik's [file] config instead - see traefik.toml
+
+
+#docker run -d \
+docker create \
+  --name $NAME \
+  --restart="unless-stopped" \
+  `# A dedicated IP means port mapping does not have any effect.` \
+  `# All ports are accessible on dedicated IP and no ports on docker host` \
+  `# are mapped.` \
+  `# Traefik will still redirect FQDN to container through proxy network.` \
+  `# However leaving commented out in case we need to re-enable since` \
+  `# these should still work fine for access via docker host system if` \
+  `# no LAN IP provided` \
+    `#-p 8083:80` \
+    `#-p 8084:443` \
+    `#-p 2055:2055/udp` \
+  --network lan_net \
+  --ip=${secrets[IP]} \
+  `# No need to redefine ports since now using dedicated IP` \
+    `#-e PUBLIC_HTTPS_PORT=8084` \
+    `#-e PUBLIC_WS_PORT=8084` \
+  `#-e PUID=1000 -e PGID=1000` \
+  `#-e PUID=0 -e PGID=0` \
+  -e PUID=911 -e PGID=911 \
+  -e TZ='Europe/London' \
+  -v /storage/Docker/UNMS/data:/config \
+  --log-driver json-file \
+  --log-opt max-size=20m \
+  --log-opt max-file=10 \
+  `# ------- Traefik Proxy Section -------` \
+  `#--network traefik-proxy` \
+  -l "traefik.enable=true" \
+  -l "traefik.port=443" \
+  -l "traefik.protocol=https" \
+  -l "traefik.frontend.rule=Host:$NAME.$FQDN" \
+  -l traefik.frontend.headers.SSLRedirect=true \
+  -l traefik.frontend.headers.STSSeconds=315360000 \
+  -l traefik.frontend.headers.browserXSSFilter=true \
+  -l traefik.frontend.headers.contentTypeNosniff=true \
+  -l traefik.frontend.headers.forceSTSHeader=true \
+  -l traefik.frontend.headers.SSLHost=${FQDN} \
+  -l traefik.frontend.headers.STSIncludeSubdomains=true \
+  -l traefik.frontend.headers.STSPreload=true \
+  -l traefik.frontend.headers.frameDeny=true \
+  `# -------------------------------------` \
+  -l com.centurylinklabs.watchtower.enable='false' \
+  oznu/unms:latest
+  #oznu/unms:0.13.1
+  #oznu/unms:0.13.0r3
+  #oznu/unms:0.12.0-beta.7
+  #oznu/unms:0.11.3
+
+# Add to bridge & traefik-proxy network so it can reach the other container
+docker network connect bridge $NAME
+docker network connect traefik-proxy $NAME
+
+# Start container
+docker start $NAME

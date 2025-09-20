@@ -1,0 +1,73 @@
+#!/bin/bash
+
+# Update GitHub with any changes to Docker scripts (timeout to default No after 10s).
+read -r -n 10 -t 5 -p "`echo -e $'\e[0;35m'`Do you wish to update git repo for docker run scripts? [y/N] `echo -e $'\n\e[1;35m'`(Script will continue without updating repo if no response in 5s)`echo -e $'\e[0m'`" response
+response=${response:-No}    # Default response
+if [[ "$response" =~ ^([yY][eE][sS]|[yY])+$ ]]; then
+    /home/ryan/scripts/docker/_update_git.sh
+fi
+echo
+
+# Get sensitive info from .conf file
+CONF_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+typeset -A secrets    # Define array to hold variables 
+while read line; do
+  if echo $line | grep -F = &>/dev/null; then
+    varname=$(echo "$line" | cut -d '=' -f 1); secrets[$varname]=$(echo "$line" | cut -d '=' -f 2-)
+  fi
+done < $CONF_DIR/syncthing.conf
+#echo ${secrets[FQDN]}; echo ${secrets[USERNAME]}; echo ${secrets[PASSWORD]}
+
+FQDN="${secrets[FQDN]}"
+NAME="syncthing"
+
+docker stop $NAME
+docker rm -f -v $NAME
+
+# Create container, then add to traefik-proxy network, then start it to make sure it has access to it's 'normal' network
+# We use 'docker create' to create the container, then 'docker network connect' to add the container to traefik-proxy,
+# then 'docker start' to startup the container.
+# Also '-d' not needed with 'docker create' since 'docker start' sutomatically starts in detached mode.
+
+#docker run -d \
+docker create \
+  --restart="unless-stopped" \
+  --name=$NAME \
+  -e TZ=Europe/London \
+  -e UMASK=022 \
+  -p 8384:8384 \
+  -p 22000:22000 \
+  -p 21027:21027/udp \
+  -e PUID=1000 \
+  -e PGID=1000 \
+  -e DOCKER_MODS=linuxserver/mods:universal-tshoot \
+  -v /storage/Docker/syncthing/data:/config \
+  -v /storage/Backup:/Backup \
+  -v /storage/Docker:/Docker \
+  -v /storage/Media:/Media \
+  -v /storage/scratchpad:/scratchpad \
+  `# ------- Traefik Proxy Section -------` \
+  -l "traefik.enable=true" \
+  -l "traefik.port=8384" \
+  -l "traefik.frontend.rule=Host:$NAME.$FQDN" \
+  `# -------------------------------------` \
+  linuxserver/syncthing:latest
+
+# Add to bridge & traefik-proxy network so it can reach the other container
+docker network connect bridge $NAME
+docker network connect traefik-proxy $NAME
+
+# Start container
+docker start $NAME
+
+# Increase inotify monitoring limits since Documents folder is large
+# turns out this must be done on host system, not in container.
+#   sleep 2
+#   docker exec syncthing bash -c 'echo "fs.inotify.max_user_watches=307200" | tee -a /etc/sysctl.conf'
+#   docker exec syncthing bash -c 'pkill syncthing'
+# To increase immediately and temporarily run:
+#   sudo sysctl fs.inotify.max_user_watches=307200; sudo sysctl -p 
+# To increase permanently at next reboot run:
+#   echo fs.inotify.max_user_watches=307200 | sudo tee -a /etc/sysctl.conf
+# To view current limit:
+#   cat /proc/sys/fs/inotify/max_user_watches

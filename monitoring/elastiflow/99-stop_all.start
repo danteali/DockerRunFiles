@@ -1,0 +1,12 @@
+#!/bin/bash
+
+docker stop elastiflow
+docker stop elastiflow-elasticsearch-oss
+docker stop elastiflow-kibana-oss
+docker stop elastiflow-logstash-oss
+
+docker rm -f -v elastiflow
+docker rm -f -v elastiflow-elasticsearch-oss
+docker rm -f -v elastiflow-kibana-oss
+docker rm -f -v elastiflow-logstash-oss
+

@@ -1,0 +1,84 @@
+#!/bin/bash
+
+
+#  - Stopped working early Aug after image update - noticed on 8th Aug. Last working download was 1st Aug. 
+#  - Build 2.0.0.5322-ls27 released 24th July, updated to 2.0.0.5322-ls28 on 1st Aug and 2.0.0.5322-ls29 on 3rd Aug.
+#  - Restored duplicacy backup from 2nd Aug 3am and build 2.0.0.5322-ls28 - left tag static for now
+
+docker stop sonarr > /dev/null 2>&1
+docker rm -f -v sonarr > /dev/null 2>&1
+
+
+if [[ $1 == "--local" ]]; then
+  echo "Using localhost networking"
+  docker run -d \
+    --name sonarr \
+    --restart="unless-stopped" \
+    -p 8989:8989 \
+    -e PUID=1000 -e PGID=1000 \
+    -e TZ="Europe/London" \
+    -v /storage/Docker/sonarr/data:/config \
+    -v /storage/Media/Video/TV:/tv \
+    -v /storage/scratchpad/downloads:/downloads \
+    -v /storage/Media/Video:/all_vids \
+    -e DOCKER_MODS=linuxserver/mods:universal-tshoot \
+    ghcr.io/linuxserver/sonarr
+    #linuxserver/sonarr:2.0.0.5322-ls27
+    #linuxserver/sonarr:2.0.0.5322-ls28 
+else
+
+  if [[ $1 != "--nochecks" ]]; then
+    #Check PIA running before starting
+    if [ ! -z "$(docker ps | grep vpn-torr | grep Up)" ]; then
+      echo "PIA running - starting Sonarr"
+      #echo "$(docker ps | grep vpn-torr | grep Up)"
+    else
+      echo "PIA not running - not starting Sonarr. Run using localhost networking with: --local"
+      echo "Quitting"
+      exit 1
+    fi
+  fi
+
+  docker run -d \
+    --name sonarr \
+    --restart="unless-stopped" \
+    -e PUID=1000 -e PGID=1000 \
+    -e TZ="Europe/London" \
+    -v /storage/Docker/sonarr/data:/config \
+    -v /storage/Media/Video/TV:/tv \
+    -v /storage/scratchpad/downloads:/downloads \
+    -v /storage/Media/Video:/all_vids \
+    -e DOCKER_MODS=linuxserver/mods:universal-tshoot \
+    --net=container:vpn-torr \
+    ghcr.io/linuxserver/sonarr
+    #linuxserver/sonarr:2.0.0.5322-ls27
+    #linuxserver/sonarr:2.0.0.5322-ls28 
+fi
+
+if [[ $1 != "--nochecks" ]]; then
+  # Check IPs to confirm running in VPN
+  red=$(tput setaf 1)
+  green=`tput setaf 2`
+  reset=$(tput sgr0)
+  NAME=sonarr
+  IPCHECK="/home/ryan/scripts/docker/torrents/torr.ipcheck"
+  docker run --rm --net=container:$NAME appropriate/curl curl -s ipinfo.io > $IPCHECK
+  PIAIP=$(cat $IPCHECK | grep -e \"ip | tr -d '\n\r ,"ip:')
+  PIACO=$(cat $IPCHECK | grep -e country | tr -d '", ' | sed 's/country://')
+  ISPIP=$(curl -s ipinfo.io | grep -e \"ip | tr -d '\n\r ,"ip:')
+
+  echo; echo "Checking IP of container does not equal ISP IP..."
+  printf "%-20s %15s\n" "ISP IP..." "$ISPIP"
+  printf "%-20s %15s\n" "Container IP..." "$PIAIP"
+  printf "%-20s %15s\n" "Container country..." "$PIACO"
+
+  if [[ $PIAIP == $ISPIP ]]; then
+    echo "${red}$NAME not connected to VPN, killing container...${reset}"
+    # No longer use this  to kill container. Transmission IP checked regularly via 
+    # 'transmission_monitor' and transmission container killed if not connected to VPN
+    #docker rm -f -v $NAME
+    exit 1
+  else
+    echo "${green}$NAME connected to VPN!${reset}"
+  fi
+fi

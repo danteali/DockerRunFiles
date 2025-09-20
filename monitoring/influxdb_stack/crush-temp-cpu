@@ -1,0 +1,2 @@
+#!/bin/bash
+sensors | sed -rn 's/.*Physical id 0:\s+([^ ]+).*/\1/p' | sed 's/^.//' | sed  's/..$//'

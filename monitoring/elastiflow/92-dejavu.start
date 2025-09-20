@@ -1,0 +1,13 @@
+#!/bin/bash
+
+NAME="elk_dejavu"
+
+docker stop $NAME
+docker rm -f -v $NAME
+
+docker run -d \
+  --name $NAME \
+  --restart="unless-stopped" \
+  --network=dockprom_monitor-net \
+  -p 1358:1358 \
+  appbaseio/dejavu

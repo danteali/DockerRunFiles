@@ -1,0 +1,100 @@
+#!/bin/bash
+
+# We've used the macvlan 'trick' to give this container it's own IP on the network (hence '--ip=' 
+# in command below) using '--network lan_net' to allow Alexa voice integration (via Emulated Hue). 
+# For some reason it wouldn't work for me without this. But some users report this is not needed. 
+# Some have had luck using the '--net=host' option to get it working.
+# macvlan usage info: https://blog.oddbit.com/post/2018-03-12-using-docker-macvlan-networks/
+# Also see the script in the 'macvlan' folder which sets up the local communication between host and 
+# containers.
+
+# Check running as root - needed for logrotation
+    if [ $(id -u) -ne 0 ]; then tput setaf 1; echo "Not running as root, attempting to automatically restart script with root access..."; tput sgr0; echo; sudo $0 $*; exit 1; fi
+
+# Get sensitive info from .conf file
+CONF_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+typeset -A secrets    # Define array to hold variables 
+while read line; do
+  if echo $line | grep -F = &>/dev/null; then
+    varname=$(echo "$line" | cut -d '=' -f 1); secrets[$varname]=$(echo "$line" | cut -d '=' -f 2-)
+  fi
+done < $CONF_DIR/home-assistant.conf
+#echo ${secrets[FQDN]}; echo ${secrets[IP]}
+
+FQDN="${secrets[FQDN]}"
+NAME="home-assistant"
+
+docker stop $NAME
+docker rm -f -v $NAME
+
+# Delete old logging data as sometimes causes issues restarting conatiner
+#sudo rm /storage/Docker/home-assistant/config/home-assistant_v2.db
+
+# Rotate log as it makes it easier to analyse log file at /var/log/homeassistant/ instead of using 
+# 'dlog home-assistant'
+sudo logrotate -vf /etc/logrotate.d/homeassistant
+
+# (Re-)Install latest HACS
+/home/ryan/scripts/docker/monitoring/homeassistant/update_hacs.sh
+
+# Create container, then add to traefik-proxy network, then start it to make sure it has access to 
+# it's 'normal' network. We use 'docker create' to create the container, then 'docker network 
+# connect' to add the container to traefik-proxy, then 'docker start' to startup the container.
+# Also '-d' not needed with 'docker create' since 'docker start' sutomatically starts in detached 
+# mode.
+
+#docker run -d \
+docker create \
+  --name=$NAME \
+  --restart="unless-stopped" \
+  -l org.label-schema.group="monitoring" \
+  `# A dedicated IP means port mapping does not have any effect.` \
+  `# All ports are accessible on dedicated IP and no ports on docker host` \
+  `# are mapped.` \
+  `# Traefik will still redirect FQDN to container through proxy network.` \
+  `# However leaving commented out in case we need to re-enable since` \
+  `# these should still work fine for access via docker host system if` \
+  `# no LAN IP provided` \
+    `#-p 8123:8123` \
+    `#-p 8124:8124` \
+    `#-p 8300:8300` \
+    `#-p 8300:8300/udp` \
+    `#-p 1900:1900` \
+    `#-p 1900:1900/udp` \
+  --network lan_net \
+  --ip=${secrets[IP]} \
+  --privileged \
+  -v /storage/Docker/$NAME/config:/config \
+  -v /etc/localtime:/etc/localtime:ro \
+  -v /var/log/docker/homeassistant/home-assistant.log:/config/home-assistant.log \
+  -v /storage/scratchpad/:/scratchpad \
+  `#--device /dev/bus/usb/002/06` \
+  `#--device /dev/bus/usb/002/06:/dev/bus/usb/002/06` \
+  -v /dev/bus/usb:/dev/bus/usb \
+  `# ------- Traefik Proxy Section -------` \
+  -l "traefik.enable=true" \
+  -l "traefik.port=8123" \
+  -l "traefik.frontend.rule=Host:ha.$FQDN" \
+  -l "traefik.frontend.whiteList.useXForwardedFor=true" \
+  -l "traefik.frontend.passHostHeader=true" \
+  `# -------------------------------------` \
+  -l com.centurylinklabs.watchtower.enable=false \
+  --log-driver json-file \
+  --log-opt max-size=20m \
+  --log-opt max-file=10 \
+  ghcr.io/home-assistant/home-assistant:stable
+  #homeassistant/home-assistant:stable
+  #homeassistant/home-assistant:2021.6.2
+  #homeassistant/home-assistant:2021.1.5
+  #homeassistant/home-assistant:2020.7.16
+  #homeassistant/home-assistant:0.113.3
+  #homeassistant/home-assistant:0.107.7
+  #homeassistant/home-assistant:0.102.3
+
+
+# Add to traefik-proxy network so it can reach the other container
+docker network connect bridge $NAME
+docker network connect traefik-proxy $NAME
+
+# Start container
+docker start $NAME

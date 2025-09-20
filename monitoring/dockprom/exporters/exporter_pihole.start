@@ -1,0 +1,36 @@
+#!/bin/bash
+
+# Get sensitive info from .conf file
+CONF_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+typeset -A secrets    # Define array to hold variables 
+while read line; do
+  if echo $line | grep -F = &>/dev/null; then
+    varname=$(echo "$line" | cut -d '=' -f 1); secrets[$varname]=$(echo "$line" | cut -d '=' -f 2-)
+  fi
+done < $CONF_DIR/exporters.conf
+#echo ${secrets[INFLUX_USERNAME]}; echo ${secrets[INFLUX_PASSWORD]}
+#echo ${secrets[INFLUX_PORT]}; echo ${secrets[INFLUX_DATABASE]}
+#echo ${secrets[PIHOLE_API]}
+
+NAME="influxdb-pihole"
+
+docker stop $NAME
+docker rm -f -v $NAME
+
+docker run -d \
+  --restart="unless-stopped" \
+  --name="$NAME" \
+  --network dockprom_monitor-net \
+  -l org.label-schema.group="monitoring" \
+  -e INFLUX_HOST="influxdb" \
+  -e INFLUX_USERNAME="${secrets[INFLUX_USERNAME]}" \
+  -e INFLUX_PASSWORD="${secrets[INFLUX_PASSWORD]}" \
+  -e INFLUX_PORT="${secrets[INFLUX_PORT]}" \
+  -e INFLUX_DATABASE="${secrets[INFLUX_DATABASE]}" \
+  -e PIHOLE_API="${secrets[PIHOLE_API]}" \
+  -e PIHOLE_INSTANCE_NAME="pihole" \
+  -e REPORTING_INTERVAL="10" \
+  xoryouyou/pi-hole-influx
+
+
+

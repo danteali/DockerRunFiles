@@ -1,0 +1,17 @@
+#!/bin/bash
+
+NAME="influxdb"
+
+docker stop $NAME
+docker rm -f -v $NAME
+
+docker run -d \
+  --restart="unless-stopped" \
+  --network dockprom_monitor-net \
+  -l org.label-schema.group="monitoring" \
+  --name="$NAME" \
+  -p 8086:8086 \
+  -v /storage/Docker/influxdb/data_t1/data:/var/lib/influxdb \
+  -v /storage/Docker/influxdb/data_t1/config/influxdb.conf:/etc/influxdb/influxdb.conf:ro \
+  influxdb:1.5 -config /etc/influxdb/influxdb.conf
+

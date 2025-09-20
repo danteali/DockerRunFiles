@@ -1,0 +1,37 @@
+#!/bin/bash
+
+# Get sensitive info from .conf file
+CONF_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+typeset -A secrets    # Define array to hold variables 
+while read line; do
+  if echo $line | grep -F = &>/dev/null; then
+    varname=$(echo "$line" | cut -d '=' -f 1); secrets[$varname]=$(echo "$line" | cut -d '=' -f 2-)
+  fi
+done < $CONF_DIR/chronograf.conf
+#echo ${secrets[FQDN]}; echo ${secrets[USERNAME]}; echo ${secrets[PASSWORD]}
+
+FQDN="${secrets[FQDN]}"
+NAME="chronograf"
+
+docker stop $NAME
+docker rm -f -v $NAME
+
+#docker run -d \
+docker create \
+  --restart="unless-stopped" \
+  --network dockprom_monitor-net \
+  -l org.label-schema.group="monitoring" \
+  --name $NAME \
+  -p 18888:8888 \
+  -v /storage/Docker/chronograf/data:/var/lib/chronograf \
+  `# ------- Traefik Proxy Section -------` \
+  -l "traefik.enable=true" \
+  -l "traefik.dashboard.port=8888" \
+  -l "traefik.dashboard.frontend.rule=Host:$NAME.$FQDN" \
+  -l "traefik.frontend.auth.basic.users=${secrets[USERNAME]}:${secrets[PASSWORD]}" \
+  `# -------------------------------------` \
+  chronograf --influxdb-url=http://influxdb:8086
+
+docker network connect traefik-proxy $NAME
+docker start $NAME
+

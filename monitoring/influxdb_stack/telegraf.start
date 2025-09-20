@@ -1,0 +1,40 @@
+#!/bin/bash
+
+# Get sensitive info from .conf file
+CONF_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+typeset -A secrets    # Define array to hold variables 
+while read line; do
+  if echo $line | grep -F = &>/dev/null; then
+    varname=$(echo "$line" | cut -d '=' -f 1); secrets[$varname]=$(echo "$line" | cut -d '=' -f 2-)
+  fi
+done < $CONF_DIR/telegraf.conf
+#echo ${secrets[HOST]}
+
+NAME="telegraf"
+
+docker stop $NAME
+docker rm -f -v $NAME
+
+docker run -d \
+  --restart="unless-stopped" \
+  --network dockprom_monitor-net \
+  -l org.label-schema.group="monitoring" \
+  --name="$NAME" \
+  --add-host="influxdb:${secrets[HOST]}" \
+  --hostname=crush \
+  -v /storage/Docker/telegraf/data/config/telegraf.conf:/etc/telegraf/telegraf.conf:ro \
+  -v /storage/Docker/telegraf/data/execs/crush-temp-cpu:/usr/local/bin/crush-temp-cpu \
+  -v /storage/Docker/telegraf/data/mibs:/root/.snmp/mibs:ro \
+  -v /var/run/docker.sock:/var/run/docker.sock:ro \
+  -v /:/rootfs:ro \
+  -v /sys:/rootfs/sys:ro \
+  -v /proc:/rootfs/proc:ro \
+  -v /etc:/rootfs/etc:ro \
+  -p 161:161 \
+  -e "HOST_MOUNT_PREFIX=/rootfs" \
+  -e "HOST_PROC=/rootfs/proc" \
+  -e "HOST_SYS=/rootfs/sys" \
+  -e "HOST_ETC=/rootfs/etc" \
+  telegraf:1.11.5
+  #telegraf
+

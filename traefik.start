@@ -1,0 +1,73 @@
+#!/bin/bash
+
+# Remember to make sure your domain name is set up with your provider to point all subdomains back
+# to this host.
+# Make sure the router/firewall is set to send port 80/443 traffic to this host.
+# And if you host your own DNS service (e.g. pihole) you can edit the hosts file to resolve any  
+# proxied addresses back to this server. This way you can still access the services internally with
+# the same addresses but the traffic gets bounced directly back to this server without routing
+# outside the LAN.
+
+# Update GitHub with any changes to Docker scripts (timeout to default No after 10s).
+read -r -n 10 -t 5 -p "`echo -e $'\e[0;35m'`Do you wish to update git repo for docker run scripts? [y/N] `echo -e $'\n\e[1;35m'`(Script will continue without updating repo if no response in 5s)`echo -e $'\e[0m'`" response
+response=${response:-No}    # Default response
+if [[ "$response" =~ ^([yY][eE][sS]|[yY])+$ ]]; then
+    /home/ryan/scripts/docker/_update_git.sh
+fi
+echo
+
+# Get sensitive info from .conf file
+CONF_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+typeset -A secrets    # Define array to hold variables 
+while read line; do
+  if echo $line | grep -F = &>/dev/null; then
+    varname=$(echo "$line" | cut -d '=' -f 1); secrets[$varname]=$(echo "$line" | cut -d '=' -f 2-)
+  fi
+done < $CONF_DIR/traefik.conf
+#echo ${secrets[FQDN]}
+
+FQDN="${secrets[FQDN]}"
+NAME="traefik"
+
+docker stop $NAME
+docker rm -f -v $NAME
+
+#docker run -d \
+docker create \
+  --restart="unless-stopped" \
+  --name="$NAME" \
+  -v /storage/Docker/traefik/config/traefik.toml:/etc/traefik/traefik.toml \
+  -v /storage/Docker/traefik/config/rules.toml:/etc/traefik/rules.toml \
+  -v /storage/Docker/traefik/config/acme.json:/etc/traefik/acme.json \
+  -v /storage/Docker/traefik/config/htpasswds:/etc/traefik/htpasswds \
+  -v /storage/Docker/traefik/config/certs:/etc/traefik/certs \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v /var/log/docker/traefik/traefik.log:/var/log/traefik/traefik.log \
+  -v /var/log/docker/traefik/access.log:/var/log/traefik/access.log \
+  -v "/etc/timezone:/etc/timezone:ro" \
+  -v "/etc/localtime:/etc/localtime:ro" \
+  -p 80:80 \
+  -p 443:443 \
+  -p 9999:9999 \
+  `# ------- Traefik Proxy Section -------` \
+  --network traefik-proxy \
+  -l "traefik.enable=true" \
+  -l "traefik.dashboard.port=9999" \
+  `# To access container on $NAME.$FQDN` \
+  -l "traefik.dashboard.frontend.rule=Host:$NAME.$FQDN" \
+  `# -------------------------------------` \
+  -l com.centurylinklabs.watchtower.enable=false \
+  traefik:1.7.8 #--loglevel=debug
+  #traefik:v1.7 #--loglevel=debug
+  #containous/traefik:latest --log.loglevel=debug
+
+
+
+# Add to bridge & traefik-proxy network so it can reach the other container
+#docker network connect bridge $NAME
+docker network connect traefik-proxy $NAME
+docker network connect dockprom_monitor-net $NAME
+
+# Start container
+docker start $NAME
+

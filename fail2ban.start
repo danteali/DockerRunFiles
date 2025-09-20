@@ -1,0 +1,74 @@
+#!/bin/bash
+
+# Update GitHub with any changes to Docker scripts (timeout to default No after 10s).
+read -r -n 10 -t 5 -p "`echo -e $'\e[0;35m'`Do you wish to update git repo for docker run scripts? [y/N] `echo -e $'\n\e[1;35m'`(Script will continue without updating repo if no response in 5s)`echo -e $'\e[0m'`" response
+response=${response:-No}    # Default response
+if [[ "$response" =~ ^([yY][eE][sS]|[yY])+$ ]]; then
+    /home/ryan/scripts/docker/_update_git.sh
+fi
+echo
+
+# Get sensitive info from .conf file
+CONF_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+typeset -A secrets    # Define array to hold variables 
+while read line; do
+  if echo $line | grep -F = &>/dev/null; then
+    varname=$(echo "$line" | cut -d '=' -f 1); secrets[$varname]=$(echo "$line" | cut -d '=' -f 2-)
+  fi
+done < $CONF_DIR/fail2ban.conf
+#echo ${secrets[F2B_DEST_EMAIL]}; echo ${secrets[F2B_SENDER]}
+#echo ${secrets[SMPTUSER]}; echo ${secrets[SMTPPASSWORD]}
+
+docker stop fail2ban
+docker rm -f -v fail2ban
+
+docker run -d --name fail2ban --restart always \
+  --network host \
+  --cap-add NET_ADMIN \
+  --cap-add NET_RAW \
+  -v /storage/Docker/fail2ban/crazymax/data:/data \
+  -v /var/log:/var/log \
+  `#-v /var/log/docker/nextcloud/nextcloud.log:/logs/nextcloud.log:ro` \
+  `#-v "/var/log/docker/plex/Plex Media Server.log:/logs/plex.log:ro"` \
+  `#-v /storage/Docker/organizr2/www/db/organizrLoginLog.json:/logs/organizr2.log:ro` \
+  `#-v /var/log/docker/organizr2/organizrLoginLog.json:/logs/organizr2.log:ro` \
+  -e F2B_IPTABLES_CHAIN="FORWARD" \
+  -e TZ="Europe/London" \
+  -e F2B_LOG_LEVEL="INFO" \
+  -e F2B_LOG_TARGET="/var/log/fail2ban.log" \
+  -e F2B_DB_PURGE_AGE="1d" \
+  -e F2B_MAX_RETRY="3" \
+  -e F2B_DEST_EMAIL="${secrets[F2B_DEST_EMAIL]}" \
+  -e F2B_SENDER="${secrets[F2B_SENDER]}" \
+  -e F2B_ACTION="%(action_mwl)s" \
+  -e SSMTP_HOST="smtp.gmail.com" \
+  -e SSMTP_PORT="587" \
+  -e SSMTP_HOSTNAME="crush" \
+  -e SSMTP_USER="${secrets[SMPTUSER]}" \
+  -e SSMTP_PASSWORD="${secrets[SMTPPASSWORD]}" \
+  -e SSMTP_TLS="YES" \
+  crazymax/fail2ban:latest
+
+
+# Command to run superitman fail2ban image. Used to use this one but found crazymax to be
+# more regularly updated and better for my needs. Keeping this here for a record in case
+# I need it again. 
+
+#docker run -d -it \
+#  --name fail2ban \
+#  --restart="unless-stopped" \
+#  -v /storage/Docker/fail2ban/superitman/config/jail.local:/etc/fail2ban/jail.local \
+#  -v /var/log:/var/log \
+#  -v /storage/Docker/fail2ban/superitman/filter.d/traefik-auth.conf:/etc/fail2ban/filter.d/traefik-auth.conf \
+#  -v /storage/Docker/fail2ban/superitman/filter.d/traefik-botsearch.conf:/etc/fail2ban/filter.d/traefik-botsearch.conf \
+#  -v /storage/Docker/fail2ban/superitman/jail.d/traefik.conf:/etc/fail2ban/jail.d/traefik.conf \
+#  -v /usr/sbin/sendmail:/usr/sbin/sendmail \
+#  -v /usr/sbin/ssmtp:/usr/sbin/ssmtp \
+#  -v /etc/ssmtp/ssmtp.conf:/etc/ssmtp/ssmtp.conf:ro \
+#  -v /usr/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu:ro \
+#  -v /etc/timezone:/etc/timezone.host:ro \
+#  --net host \
+#  `#--cap-add=NET_ADMIN` \
+#  `#--cap-add=NET_RAW` \
+#  --privileged \
+#  superitman/fail2ban:latest

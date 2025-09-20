@@ -1,0 +1,48 @@
+#!/bin/bash
+
+
+# Update GitHub with any changes to Docker scripts.
+/home/ryan/scripts/docker/_update_git.sh
+
+# Get sensitive info from .conf file
+CONF_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+typeset -A secrets    # Define array to hold variables 
+while read line; do
+  if echo $line | grep -F = &>/dev/null; then
+    varname=$(echo "$line" | cut -d '=' -f 1); secrets[$varname]=$(echo "$line" | cut -d '=' -f 2-)
+  fi
+done < $CONF_DIR/portainer.conf
+#echo ${secrets[FQDN]}
+
+FQDN="${secrets[FQDN]}"
+NAME="portainer"
+
+docker stop $NAME
+docker rm -f -v $NAME
+
+# Create container, then add to traefik-proxy network, then start it to make sure it has access to it's 'normal' network
+# We use 'docker create' to create the container, then 'docker network connect' to add the container to traefik-proxy,
+# then 'docker start' to startup the container.
+# Also '-d' not needed with 'docker create' since 'docker start' sutomatically starts in detached mode.
+
+#docker run -d \
+docker create \
+  --name=$NAME \
+  --restart="unless-stopped" \
+  -p 9000:9000 \
+  -e TZ="Europe/London" \
+  -v /storage/Docker/portainer/data:/data \
+  -v "/var/run/docker.sock:/var/run/docker.sock" \
+  `# ------- Traefik Proxy Section -------` \
+  --network traefik-proxy \
+  -l "traefik.enable=true" \
+  -l "traefik.port=9000" \
+  -l "traefik.frontend.rule=Host:$NAME.$FQDN" \
+  `# -------------------------------------` \
+  portainer/portainer
+
+  # Add to traefik-proxy network so it can reach the other container
+docker network connect traefik-proxy $NAME
+
+# Start container
+docker start $NAME

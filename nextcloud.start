@@ -1,0 +1,126 @@
+#!/bin/bash
+
+# Update GitHub with any changes to Docker scripts (timeout to default No after 10s).
+read -r -n 10 -t 5 -p "`echo -e $'\e[0;35m'`Do you wish to update git repo for docker run scripts? [y/N] `echo -e $'\n\e[1;35m'`(Script will continue without updating repo if no response in 5s)`echo -e $'\e[0m'`" response
+response=${response:-No}    # Default response
+if [[ "$response" =~ ^([yY][eE][sS]|[yY])+$ ]]; then
+    /home/ryan/scripts/docker/_update_git.sh
+fi
+echo
+
+# Get sensitive info from .conf file
+CONF_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+typeset -A secrets    # Define array to hold variables 
+while read line; do
+  if echo $line | grep -F = &>/dev/null; then
+    varname=$(echo "$line" | cut -d '=' -f 1); secrets[$varname]=$(echo "$line" | cut -d '=' -f 2-)
+  fi
+done < $CONF_DIR/nextcloud.conf
+#echo ${secrets[FQDN]}; echo ${secrets[ADMIN_USER]}; echo ${secrets[ADMIN_PASSWORD]}
+#echo ${secrets[DB_NAME]}; echo ${secrets[DB_USER]}; echo ${secrets[DB_PASSWORD]}
+
+
+FQDN="${secrets[FQDN]}"
+NAME="nextcloud"
+SUBDOMAIN="nc"
+
+docker stop $NAME
+docker rm -f -v $NAME
+
+
+# Check DB is running, and start if not
+
+if [ ! -z "$(docker ps | grep mariadb | grep Up)" ]; then
+  echo "mariadb running..."
+else
+  echo "mariadb container not running - starting mariadb..."
+  /home/ryan/scripts/docker/mariadb.start
+  sleep 10
+
+  if [ ! -z "$(docker ps | grep mariadb | grep Up)" ]; then
+    echo "mariadb container didn't start successfully - not starting nextcloud"
+    exit 1
+  fi
+fi
+
+
+## Start Nextcloud
+
+# Create container, then add to traefik-proxy network, then start it.
+# Nextcloud container needs access to mariadb running on the default bridge network. With 'docker run'
+# we can't add to more than one network (we can with 'docker-compose'). And when in the traefik-proxy
+# network the '--link' option doesn't work.
+# To get round this we use docker create to create the container, then docker network connect to add
+# the container to traefik-proxy, then docker start to startup the container.
+# Also '-d' not needed with 'docker create' since 'docker start' sutomatically starts in detached mode.
+
+#docker run -d \
+docker create \
+  --name $NAME \
+  --restart="unless-stopped" \
+  --link mariadb:mariadb \
+  -v /storage/Backup/Current/Nextcloud:/data \
+  -v /var/log/docker/nextcloud/nextcloud.log:/data/nextcloud.log \
+  `#-v /storage/Docker/nextcloud/data/config:/config` \
+  `#-v /storage/Docker/nextcloud/data/apps:/apps2` \
+  -v /storage/Docker/nextcloud/data/config:/nextcloud/config \
+  -v /storage/Docker/nextcloud/data/apps:/nextcloud/apps2 \
+  -v /storage/Docker/nextcloud/data/themes:/nextcloud/themes \
+  -e UID=1000 -e GID=1000 \
+  -e UPLOAD_MAX_SIZE=10G \
+  -e APC_SHM_SIZE=128M \
+  -e OPCACHE_MEM_SIZE=128 \
+  -e CRON_PERIOD=15m \
+  -e TZ="Europe/London" \
+  -v /etc/localtime:/etc/localtime:ro \
+  -e ADMIN_USER=${secrets[ADMIN_USER]} \
+  -e ADMIN_PASSWORD=${secrets[ADMIN_PASSWORD]} \
+  `# Only needed for initial setup - edit config.yml after this if amendment needed` \
+  -e DB_TYPE=mysql \
+  -e DB_NAME=${secrets[DB_NAME]} \
+  -e DB_USER=${secrets[DB_USER]} \
+  -e DB_PASSWORD=${secrets[DB_PASSWORD]} \
+  -e DB_HOST=mariadb \
+  -p 8888:8888 \
+  -p 9980:9980        `# Collabora port - exposed here since Collabora using NC network via --net=container:nextcloud` \
+  `# ------- Traefik Proxy Section -------` \
+  `#--network traefik-proxy` \
+  -l "traefik.enable=true" \
+  -l "traefik.port=8888" \
+  -l "traefik.frontend.rule=Host:$SUBDOMAIN.$FQDN" \
+  -l "traefik.frontend.whiteList.useXForwardedFor=true" \
+  -l "traefik.frontend.passHostHeader=true" \
+  -l "traefik.frontend.redirect.permanent=true" \
+  -l "traefik.frontend.redirect.regex=https://(.*)/.well-known/(carddav|caldav)" \
+  -l "traefik.frontend.redirect.replacement=https://$SUBDOMAIN.$FQDN/remote.php/dav" \
+  `# -------------------------------------` \
+  ghcr.io/wonderfall/nextcloud:latest
+
+  # This was 'latest' in Aug 21 when I last had issues following the wonderfall update and change to ghcr.io
+  #ghcr.io/wonderfall/nextcloud:22.1.0
+  #wonderfall/nextcloud:latest
+
+# Add to traefik-proxy network so it can reach the other container - '--link' options above doesn't seem to work proerly if we try to add straight to traefik-proxy above.
+docker network connect bridge $NAME
+docker network connect traefik-proxy $NAME
+
+# Start container
+docker start $NAME
+
+#docker exec -ti nextcloud occ upgrade
+
+# Traefik labels which may be needed:
+#      - "traefik.frontend.whiteList.useXForwardedFor=true"
+#      - "traefik.frontend.redirect.permanent: 'true'"
+#      - "traefik.frontend.redirect.regex: https://(.*)/.well-known/(card|cal)dav"
+#      - "traefik.frontend.redirect.replacement: https://$$1/remote.php/dav/"
+
+#      - "traefik.frontend.headers.SSLRedirect=true"
+#      - "traefik.frontend.headers.STSSeconds=63072000"
+#      - "traefik.frontend.headers.browserXSSFilter=true"
+#      - "traefik.frontend.headers.customFrameOptionsValue=SAMEORIGIN"
+#      - "traefik.frontend.headers.forceSTSHeader=true"
+#      - "traefik.frontend.headers.SSLHost=example.com"
+#      - "traefik.frontend.headers.STSIncludeSubdomains=true"
+#      - "traefik.frontend.headers.STSPreload=true"
+#      - "traefik.frontend.headers.frameDeny=true"
